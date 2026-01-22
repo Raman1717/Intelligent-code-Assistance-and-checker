@@ -1,7 +1,7 @@
 """
 OPTIMIZED CODE RAG SYSTEM - WITH INTEGRATED CODE CHECKER
 ================================================================
-File 4: Answer Generation
+File 4: Answer Generation (FIXED)
 Contains: Gemini API call, prompt construction, retry & error handling
 """
 import time
@@ -12,7 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # ========== CONFIGURATION ==========
-API_KEY = "........................................"
+API_KEY = "AIzaSyASGhty0P3xF1wt18S6hD5QvghcZybI4M0"
 API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={API_KEY}"
 
 
@@ -103,21 +103,24 @@ def generate_answer(question: str, chunks: List[Dict], q_type, use_code_check: b
                     "needs_improvement": "🔧",
                     "critical": "❌"
                 }
-                emoji = status_emoji.get(summary['overall_status'], "ℹ️")
-                context_parts.append(f"**Overall Status:** {emoji} {summary['overall_status'].upper()}")
-                context_parts.append(f"**Total Issues:** {summary['total_issues']}")
-                context_parts.append(f"**Critical Issues:** {summary['critical_issues']}")
+                # FIXED: Use .get() and handle both 'status' and 'overall_status' keys
+                status = summary.get('status', summary.get('overall_status', 'unknown')).lower()
+                emoji = status_emoji.get(status, "ℹ️")
+                context_parts.append(f"**Overall Status:** {emoji} {status.upper()}")
+                
+                # FIXED: Use .get() with default values to prevent KeyError
+                context_parts.append(f"**Total Issues:** {summary.get('total_issues', 0)}")
+                context_parts.append(f"**Critical Issues:** {summary.get('critical_issues', 0)}")
             
             # Add specific issues from tools
             if "pylint" in code_check_report and isinstance(code_check_report["pylint"], dict):
                 pylint = code_check_report["pylint"]
                 if pylint.get("score") is not None:
                     context_parts.append(f"\n**Code Quality Score (Pylint):** {pylint['score']}/10")
-                    # Add some specific issues if available
                     if pylint.get("issues") and len(pylint["issues"]) > 0:
                         context_parts.append(f"**Top Pylint Issues:**")
                         for issue in pylint["issues"][:3]:
-                            context_parts.append(f"- Line {issue['line']}: {issue['code']} - {issue['message']}")
+                            context_parts.append(f"- Line {issue.get('line', 'N/A')}: {issue.get('code', 'N/A')} - {issue.get('message', 'N/A')}")
             
             if "bandit" in code_check_report and isinstance(code_check_report["bandit"], dict):
                 bandit = code_check_report["bandit"]
@@ -127,7 +130,7 @@ def generate_answer(question: str, chunks: List[Dict], q_type, use_code_check: b
                         context_parts.append("**Top Security Issues:**")
                         for issue in bandit["issues"][:3]:
                             if issue.get("severity") == "HIGH":
-                                context_parts.append(f"- Line {issue['line']}: {issue['message']}")
+                                context_parts.append(f"- Line {issue.get('line', 'N/A')}: {issue.get('message', 'N/A')}")
             
             if "flake8" in code_check_report and isinstance(code_check_report["flake8"], dict):
                 flake8 = code_check_report["flake8"]
@@ -136,37 +139,62 @@ def generate_answer(question: str, chunks: List[Dict], q_type, use_code_check: b
                     if flake8.get("issues") and len(flake8["issues"]) > 0:
                         context_parts.append("**Top Style Issues:**")
                         for issue in flake8["issues"][:3]:
-                            context_parts.append(f"- Line {issue['line']}: {issue['code']} - {issue['message']}")
+                            context_parts.append(f"- Line {issue.get('line', 'N/A')}: {issue.get('code', 'N/A')} - {issue.get('message', 'N/A')}")
         
         context_parts.append("\n")
     
-    # Add code chunks
+    # ============ IMPROVED CHUNK PRESENTATION ============
+    # Add code chunks with better formatting and NO truncation for small chunks
     for i, chunk in enumerate(chunks[:3], 1):  # Limit to 3 chunks for context
+        chunk_name = chunk.get('name', 'Unknown')
+        content = chunk.get('content', '')
+        
+        # Smart truncation: only truncate if really large
+        if len(content) > 1500:
+            displayed_content = content[:1500] + "\n... (truncated)"
+        else:
+            displayed_content = content
+        
+        # Add line number info if available
+        line_info = ""
+        if 'start_line' in chunk and 'end_line' in chunk:
+            line_info = f" (lines {chunk['start_line']}-{chunk['end_line']})"
+        elif 'line' in chunk:
+            line_info = f" (line {chunk['line']})"
+        
         context_parts.append(
-            f"### Chunk {i}: {chunk['name']} ({chunk['chunk_type']})\n"
-            f"```python\n{chunk['content'][:500]}{'...' if len(chunk['content']) > 500 else ''}\n```"
+            f"### {chunk_name}{line_info}\n"
+            f"```python\n{displayed_content}\n```"
         )
     
     context = "\n\n".join(context_parts)
     
-    # Build optimized prompt
+    # ============ IMPROVED PROMPT ============
     prompt = f"""You are an expert Python code analyst. Answer the question based on the provided code and analysis.
 
 **Question:** {question}
 
 **Question Type:** {q_type.value}
 
-**Analysis Context:**
+**Code Context:**
 {context}
 
-**Instructions:**
-1. Be CONCISE and PRECISE
-2. Reference specific functions/classes and line numbers when relevant
-3. Use bullet points for clarity
-4. Provide code examples for suggestions
-5. If security or quality issues are mentioned, prioritize those in your answer
-6. If code checker tools are not installed, mention this clearly
-7. Keep answer under 400 words
+**CRITICAL INSTRUCTIONS:**
+1. Answer DIRECTLY and CONCISELY based on the code chunks shown above
+2. Reference code elements by their NAME (function/class/variable name), NOT by invented line numbers
+3. If line numbers are provided in chunk headers, you MAY reference them. Otherwise, DO NOT invent line numbers
+4. Use bullet points only when listing multiple items
+5. Quote relevant code snippets directly from the chunks when helpful
+6. If security or quality issues are mentioned, address them specifically
+7. If code checker tools are not installed, acknowledge this limitation
+8. Keep answer focused and under 400 words
+
+**Format your answer like this:**
+- Start with a direct answer to the question
+- Reference specific code elements by name (e.g., "in the `transaction_details` function...")
+- Only cite line numbers if they were explicitly provided in the chunk headers above
+- Provide code examples from the chunks when helpful
+- End with any important caveats or recommendations
 
 **Answer:**"""
     
