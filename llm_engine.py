@@ -12,7 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # ========== CONFIGURATION ==========
-API_KEY = "AIzaSyASGhty0P3xF1wt18S6hD5QvghcZybI4M0"
+API_KEY = ".........................................."
 API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={API_KEY}"
 
 
