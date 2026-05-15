@@ -19,7 +19,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # ========== CONFIGURATION ==========
-GEMINI_API_KEY = "AIzaSyDtPb_Tppx8jkLrHyyIV_hvvNXeEVanl2c"  # ← paste your key here
+GEMINI_API_KEY = "................................."  # ← paste your key here
 
 API_URL = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_API_KEY}'
 
