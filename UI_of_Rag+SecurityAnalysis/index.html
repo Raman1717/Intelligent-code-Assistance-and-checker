@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Python Security & RAG Analyzer</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-wrap">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <span class="logo-name">Py<span>Guard</span></span>
+      </div>
+    </div>
+
+    <div class="sidebar-body" id="sidebar-body">
+      <p class="section-label">Recents</p>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="new-chat-btn" onclick="newSession()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        New Analysis
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── Toggle ── -->
+  <button class="toggle-btn-floating" id="toggle-btn" onclick="toggleSidebar()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+  </button>
+
+  <!-- ══ MAIN AREA ══ -->
+  <main class="main-area">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-title">Python Security Analyzer + Code RAG</span>
+        <span class="topbar-file" id="topbar-file" style="display:none"></span>
+      </div>
+      <div class="topbar-right">
+        <span class="db-status" id="db-status" title="Database connection status"></span>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs" id="tabs" style="display:none">
+      <button class="tab-btn security-tab active" onclick="switchTab('security')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Security Analysis
+        <span class="tab-count" id="tab-high-count" style="display:none">0</span>
+      </button>
+      <button class="tab-btn rag-tab" onclick="switchTab('rag')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px">
+          <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+        </svg>
+        RAG Q&amp;A
+      </button>
+    </div>
+
+    <!-- ── UPLOAD (default view) ── -->
+    <div class="tab-panel active" id="panel-upload">
+      <div class="upload-panel">
+        <div class="upload-card">
+          <div class="upload-header">
+            <h2 class="upload-title">Analyze Python Code</h2>
+            <p class="upload-sub">
+              Upload a <code>.py</code> file to scan for security vulnerabilities
+              and index your code for natural-language Q&amp;A.
+            </p>
+          </div>
+
+          <!-- Session Title (mandatory) -->
+          <div class="title-input-wrap">
+            <label class="title-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              Session Title <span class="title-required">required</span>
+            </label>
+            <input type="text" id="session-title-input" class="title-input"
+              placeholder="e.g. Auth module review, API security scan..." maxlength="60"/>
+          </div>
+
+          <!-- File Drop Zone -->
+          <div class="drop-zone" id="drop-zone" onclick="triggerFileInput()">
+            <input type="file" id="file-input" accept=".py" style="display:none" onchange="onFileSelected(event)"/>
+            <div class="drop-zone-inner" id="drop-inner">
+              <div class="drop-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+              </div>
+              <p class="drop-title">Drop your <code>.py</code> file here</p>
+              <p class="drop-sub">or click to browse · only <strong>.py</strong> files accepted</p>
+            </div>
+            <div class="file-preview" id="file-preview" style="display:none">
+              <div class="file-preview-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+              </div>
+              <div class="file-preview-info">
+                <span class="file-preview-name" id="file-preview-name">—</span>
+                <span class="file-preview-meta" id="file-preview-meta">—</span>
+              </div>
+              <button class="file-remove-btn" onclick="removeFile(event)" title="Remove file">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="processing-bar" id="proc-bar">
+            <div class="processing-bar-fill" id="proc-fill"></div>
+          </div>
+
+          <div class="upload-actions">
+            <button class="btn-analyze" id="analyze-btn" onclick="startAnalysis()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              Run Analysis
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECURITY PANEL ── -->
+    <div class="tab-panel" id="panel-security">
+      <div class="security-panel" id="security-content"></div>
+    </div>
+
+    <!-- ── RAG Q&A PANEL ── -->
+    <div class="tab-panel" id="panel-rag">
+      <div class="rag-panel">
+        <div class="chat-messages" id="chat-messages">
+          <div class="rag-empty" id="rag-empty">
+            <div class="rag-empty-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </div>
+            <h3>Ask about your code</h3>
+            <p>code has been indexed · ready for Q&amp;A</p>
+            <div class="rag-suggestions">
+              <span class="rag-suggestion" onclick="askSuggestion(this)">What security issues exist?</span>
+              <span class="rag-suggestion" onclick="askSuggestion(this)">List all functions</span>
+              <span class="rag-suggestion" onclick="askSuggestion(this)">How does authentication work?</span>
+              <span class="rag-suggestion" onclick="askSuggestion(this)">What external libraries are used?</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rag-input-area">
+          <div class="rag-input-wrap">
+            <textarea class="rag-textarea" id="rag-input" rows="1"
+              placeholder="Ask a question about your code..."></textarea>
+            <button class="rag-send-btn" id="rag-send" onclick="sendRagQuery()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </div>
+          <div class="rag-hint">
+            <span><kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> new line</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Dropdown -->
+<div class="dropdown" id="dropdown">
+  <div class="dropdown-item" onclick="renameActive()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    </svg>
+    Rename
+  </div>
+  <div class="dropdown-item danger" onclick="deleteSession()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="3 6 5 6 21 6"/>
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+    </svg>
+    Delete
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let sessions    = [];
+let activeId    = null;
+let nextId      = 1;
+let dropTarget  = null;
+let sidebarOpen = true;
+let ragReady    = false;
+let dbAvailable = false;
+// Current filter for security panel
+let secFilter   = 'all';
+let secSearch   = '';
+let _currentResult = null;
+
+// ═══════════════════════════════════════════════════════════
+//  DB STATUS BADGE
+// ═══════════════════════════════════════════════════════════
+function setDbStatus(ok, msg) {
+  dbAvailable = ok;
+  const el = document.getElementById('db-status');
+  if (!el) return;
+  el.textContent = ok ? '● DB connected' : '● DB offline';
+  el.style.color  = ok ? '#4ade80' : '#f87171';
+  el.title = msg || '';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LOAD PAST SESSIONS FROM DB ON PAGE LOAD
+// ═══════════════════════════════════════════════════════════
+async function loadPastSessions() {
+  try {
+    const resp = await fetch('/api/sessions');
+    if (!resp.ok) throw new Error('status ' + resp.status);
+    const data = await resp.json();
+    setDbStatus(true, 'MySQL connected');
+
+    if (data.sessions && data.sessions.length > 0) {
+      data.sessions.forEach(s => {
+        sessions.push({
+          id: nextId++,
+          dbId: s.id,
+          title: s.title || s.filename || ('Session #' + s.id),
+          filename: s.filename,
+          result: null,
+          messages: [],
+          highCount:   s.high_count   || 0,
+          mediumCount: s.medium_count || 0,
+          _fromDB: true,
+        });
+      });
+      renderSidebar();
+    }
+  } catch(e) {
+    setDbStatus(false, 'DB unavailable: ' + e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SIDEBAR
+// ═══════════════════════════════════════════════════════════
+function renderSidebar() {
+  const body = document.getElementById('sidebar-body');
+  body.innerHTML = '<p class="section-label">Recents</p>';
+
+  sessions.forEach(s => {
+    const item = document.createElement('div');
+    item.className = 'chat-item' + (s.id === activeId ? ' active' : '');
+    item.id = 'session-' + s.id;
+
+    let badge = '';
+
+    item.innerHTML = `
+      <div class="chat-item-left" onclick="loadSession(${s.id})">
+        <span class="chat-dot"></span>
+        <span class="chat-title" id="stitle-${s.id}">${esc(s.title)}</span>
+      </div>
+      ${badge}
+      <button class="menu-btn" onclick="openDropdown(event,${s.id})">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+        </svg>
+      </button>`;
+    body.appendChild(item);
+  });
+}
+
+async function loadSession(id) {
+  const s = sessions.find(x => x.id === id);
+  if (!s) return;
+
+  activeId = id;
+  renderSidebar();
+  closeDropdown();
+
+  document.getElementById('topbar-file').textContent = s.filename || 'untitled.py';
+  document.getElementById('topbar-file').style.display = '';
+  document.getElementById('tabs').style.display = '';
+
+  // Show skeleton loader immediately for instant feedback
+  hidePanel('panel-upload');
+  hidePanel('panel-rag');
+  showPanel('panel-security');
+  switchTab('security', false);
+  document.getElementById('security-content').innerHTML = buildSkeletonHTML();
+
+  if (s._fromDB && !s.result && s.dbId) {
+    try {
+      const resp = await fetch('/api/sessions/' + s.dbId);
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.session) {
+          s.result      = data.session.security_report;
+          s._code       = data.session.code;
+          s.messages    = data.session.chat_history || [];
+          s.highCount   = data.session.high_count   || 0;
+          s.mediumCount = data.session.medium_count || 0;
+          s.filename    = data.session.filename;
+          s.title       = data.session.title || s.title;
+          s._fromDB     = false;
+          ragReady      = true;
+        }
+      }
+    } catch(e) { console.error('Failed to load DB session:', e); }
+  }
+
+  if (s.result) {
+    secFilter = 'all'; secSearch = '';
+    _currentResult = s.result;
+    // Small delay so skeleton is visible (feels intentional, not broken)
+    await new Promise(r => setTimeout(r, 280));
+    // Fade out skeleton, render real content
+    const sc = document.getElementById('security-content');
+    sc.classList.add('panel-fade-out');
+    await new Promise(r => setTimeout(r, 120));
+    renderSecurityResults(s.result);
+    sc.classList.remove('panel-fade-out');
+    sc.classList.add('panel-fade-in');
+    setTimeout(() => sc.classList.remove('panel-fade-in'), 400);
+    ragReady = true;
+  } else {
+    // No result (fresh DB session without cached result)
+    document.getElementById('security-content').innerHTML = `
+      <div class="no-issues" style="opacity:0.5">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:36px;height:36px;color:var(--text-muted)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <h3 style="color:var(--text-muted)">No analysis data</h3>
+        <p>Run a new analysis to see results here.</p>
+      </div>`;
+  }
+
+  // Animate chat history in with stagger
+  const container = document.getElementById('chat-messages');
+  container.innerHTML = '';
+  if (s.messages && s.messages.length > 0) {
+    s.messages.forEach((m, i) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'msg ' + m.role;
+      wrapper.style.opacity = '0';
+      wrapper.style.transform = 'translateY(10px)';
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble';
+      let html = (m.content || '')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      if (m.role === 'assistant') {
+        html = html.replace(/^###\s+(.+)$/gm,'<span class="md-heading">$1</span>');
+        html = html.replace(/\*\*(.*?)\*\*/g,'<strong class="md-bold">$1</strong>');
+        html = html.replace(/`([^`\n]+)`/g,'<code>$1</code>');
+        html = html.replace(/\n/g,'<br>');
+      } else {
+        html = html.replace(/\n/g,'<br>');
+      }
+      bubble.innerHTML = html;
+      wrapper.appendChild(bubble);
+      container.appendChild(wrapper);
+      setTimeout(() => {
+        wrapper.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+        wrapper.style.opacity = '1';
+        wrapper.style.transform = 'translateY(0)';
+      }, 60 + i * 40);
+    });
+  } else {
+    container.innerHTML = ragEmptyHTML();
+  }
+}
+
+function buildSkeletonHTML() {
+  const pulse = (w, h='14px', r='6px') =>
+    `<div class="skel" style="width:${w};height:${h};border-radius:${r}"></div>`;
+  return `
+    <div class="skeleton-wrap">
+      <!-- Summary cards skeleton -->
+      <div class="summary-row">
+        ${[0,1,2].map(() => `
+          <div class="skel-card">
+            ${pulse('40%','10px')} ${pulse('28px','28px','50%')}
+            ${pulse('50px','32px','8px')}
+            ${pulse('70%','10px')}
+          </div>`).join('')}
+      </div>
+      <!-- Charts row skeleton -->
+      <div class="charts-row">
+        <div class="skel-card" style="min-height:130px;display:flex;align-items:center;gap:20px">
+          ${pulse('100px','100px','50%')}
+          <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+            ${pulse('80%','10px')} ${pulse('60%','10px')} ${pulse('70%','10px')}
+          </div>
+        </div>
+        <div class="skel-card" style="min-height:130px;display:flex;flex-direction:column;gap:12px">
+          ${pulse('40%','10px')}
+          ${[0,1,2,3].map(() => `
+            <div style="display:flex;align-items:center;gap:10px">
+              ${pulse('8px','8px','50%')} ${pulse('55%','10px')}
+              <div style="flex:1"></div>
+              ${pulse('60px','5px','3px')} ${pulse('28px','20px','10px')}
+            </div>`).join('')}
+        </div>
+      </div>
+      <!-- Toolbar skeleton -->
+      <div class="skel-card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px">
+        <div style="display:flex;gap:8px">
+          ${pulse('64px','30px','20px')} ${pulse('80px','30px','20px')} ${pulse('90px','30px','20px')}
+        </div>
+        ${pulse('200px','30px','20px')}
+      </div>
+      <!-- Issue cards skeleton -->
+      ${[0,1,2,3].map((i) => `
+        <div class="skel-card" style="animation-delay:${i*60}ms">
+          <div style="display:flex;align-items:center;gap:10px">
+            ${pulse('32px','20px','4px')} ${pulse('45%','13px','6px')}
+            <div style="flex:1"></div>
+            ${pulse('18px','18px','50%')}
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TOGGLE SIDEBAR
+// ═══════════════════════════════════════════════════════════
+function toggleSidebar() {
+  sidebarOpen = !sidebarOpen;
+  document.getElementById('sidebar').classList.toggle('collapsed', !sidebarOpen);
+  const btn = document.getElementById('toggle-btn');
+  btn.classList.toggle('flipped', !sidebarOpen);
+  btn.style.left = (sidebarOpen ? 265 : 0) - 14 + 'px';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DROPDOWN
+// ═══════════════════════════════════════════════════════════
+function openDropdown(e, id) {
+  e.stopPropagation();
+  const dd = document.getElementById('dropdown');
+  if (dropTarget === id && dd.classList.contains('open')) { closeDropdown(); return; }
+  dropTarget = id;
+  dd.classList.add('open');
+  const rect = e.currentTarget.getBoundingClientRect();
+  let top = rect.bottom + 4, left = rect.right - 140;
+  if (top + 90 > window.innerHeight) top = rect.top - 94;
+  if (left < 4) left = 4;
+  dd.style.top = top + 'px'; dd.style.left = left + 'px';
+}
+function closeDropdown() {
+  document.getElementById('dropdown').classList.remove('open');
+  dropTarget = null;
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.dropdown') && !e.target.closest('.menu-btn')) closeDropdown();
+});
+
+// ═══════════════════════════════════════════════════════════
+//  RENAME / DELETE
+// ═══════════════════════════════════════════════════════════
+function renameActive() {
+  if (!dropTarget) return;
+  const id = dropTarget; closeDropdown();
+  const span = document.getElementById('stitle-' + id);
+  const s = sessions.find(x => x.id === id);
+  if (!span || !s) return;
+
+  const inp = document.createElement('input');
+  inp.className = 'chat-title-input'; inp.value = s.title;
+  span.replaceWith(inp); inp.focus(); inp.select();
+
+  const save = async () => {
+    const newTitle = inp.value.trim() || s.title;
+    s.title = newTitle;
+    renderSidebar();
+
+    if (s.dbId) {
+      try {
+        const resp = await fetch('/api/sessions/' + s.dbId + '/rename', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: newTitle })
+        });
+        const data = await resp.json();
+        if (data.ok) console.log('[DB] Title saved:', newTitle);
+        else console.warn('[DB] Rename failed:', data.error);
+      } catch(e) { console.warn('[DB] Rename request failed:', e.message); }
+    }
+  };
+
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); save(); }
+    if (e.key === 'Escape') renderSidebar();
+  });
+  inp.addEventListener('blur', save);
+}
+
+async function deleteSession() {
+  if (!dropTarget) return;
+  const id = dropTarget; closeDropdown();
+  const s = sessions.find(x => x.id === id);
+  if (!s) return;
+
+  if (s.dbId) {
+    try {
+      const resp = await fetch('/api/sessions/' + s.dbId + '/delete', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await resp.json();
+      if (data.ok) console.log('[DB] Session deleted:', s.dbId);
+      else console.warn('[DB] Delete failed:', data.error);
+    } catch(e) { console.warn('[DB] Delete request failed:', e.message); }
+  }
+
+  const el = document.getElementById('session-' + id);
+  if (el) {
+    el.classList.add('removing');
+    el.addEventListener('animationend', () => {
+      sessions = sessions.filter(s => s.id !== id);
+      if (activeId === id) {
+        activeId = null;
+        ['panel-security', 'panel-rag'].forEach(pid => {
+          const p = document.getElementById(pid);
+          if (p) { p.classList.remove('active'); p.style.display = 'none'; }
+        });
+        document.getElementById('tabs').style.display = 'none';
+        document.getElementById('topbar-file').style.display = 'none';
+        const up = document.getElementById('panel-upload');
+        if (up) { up.classList.add('active'); up.style.display = 'flex'; }
+      }
+      renderSidebar();
+    }, { once: true });
+  } else {
+    sessions = sessions.filter(x => x.id !== id);
+    renderSidebar();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  NEW SESSION
+// ═══════════════════════════════════════════════════════════
+function newSession() {
+  activeId = null; ragReady = false;
+  selectedFile = null; selectedCode = '';
+  secFilter = 'all'; secSearch = ''; _currentResult = null;
+
+  ['panel-upload', 'panel-security', 'panel-rag'].forEach(id => {
+    const p = document.getElementById(id);
+    if (p) { p.classList.remove('active'); p.style.display = 'none'; }
+  });
+
+  document.getElementById('tabs').style.display = 'none';
+  document.getElementById('topbar-file').style.display = 'none';
+
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const secBtn = document.querySelector('.security-tab');
+  if (secBtn) secBtn.classList.add('active');
+
+  const titleInp = document.getElementById('session-title-input');
+  titleInp.value = '';
+  titleInp.classList.remove('input-error');
+  titleInp.placeholder = 'e.g. Auth module review, API security scan...';
+
+  document.getElementById('file-preview').style.display = 'none';
+  document.getElementById('drop-inner').style.display = '';
+  document.getElementById('drop-zone').classList.remove('has-file', 'drag-over', 'error');
+  document.getElementById('file-input').value = '';
+
+  document.getElementById('chat-messages').innerHTML = ragEmptyHTML();
+
+  const up = document.getElementById('panel-upload');
+  if (up) { up.classList.add('active'); up.style.display = 'flex'; }
+
+  renderSidebar();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════════════
+function switchTab(tab, animate = true) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.${tab}-tab`)?.classList.add('active');
+  hidePanel('panel-upload');
+  hidePanel('panel-security');
+  hidePanel('panel-rag');
+  showPanel('panel-' + tab);
+}
+function showPanel(id) {
+  const p = document.getElementById(id);
+  if (p) { p.classList.add('active'); p.style.display = 'flex'; }
+}
+function hidePanel(id) {
+  const p = document.getElementById(id);
+  if (p) { p.classList.remove('active'); p.style.display = 'none'; }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  FILE UPLOAD
+// ═══════════════════════════════════════════════════════════
+let selectedFile = null;
+let selectedCode = '';
+
+function triggerFileInput() { document.getElementById('file-input').click(); }
+
+function onFileSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  validateAndSetFile(file);
+}
+
+function validateAndSetFile(file) {
+  if (!file.name.endsWith('.py')) {
+    showFileError('Only .py files are accepted. Please select a Python file.');
+    return;
+  }
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    selectedCode = e.target.result;
+    showFilePreview(file);
+    const titleInp = document.getElementById('session-title-input');
+    if (!titleInp.value.trim()) {
+      titleInp.value = file.name.replace('.py', '');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function showFilePreview(file) {
+  document.getElementById('drop-inner').style.display = 'none';
+  const preview = document.getElementById('file-preview');
+  preview.style.display = 'flex';
+  document.getElementById('file-preview-name').textContent = file.name;
+  const kb = (file.size / 1024).toFixed(1);
+  const lines = selectedCode.split('\n').length;
+  document.getElementById('file-preview-meta').textContent = `${kb} KB · ~${lines} lines`;
+  document.getElementById('drop-zone').classList.add('has-file');
+}
+
+function removeFile(event) {
+  event.stopPropagation();
+  selectedFile = null; selectedCode = '';
+  document.getElementById('file-input').value = '';
+  document.getElementById('file-preview').style.display = 'none';
+  document.getElementById('drop-inner').style.display = '';
+  document.getElementById('drop-zone').classList.remove('has-file', 'drag-over', 'error');
+}
+
+function showFileError(msg) {
+  const dz = document.getElementById('drop-zone');
+  dz.classList.add('error');
+  setTimeout(() => dz.classList.remove('error'), 2000);
+  const inner = document.getElementById('drop-inner');
+  const orig = inner.innerHTML;
+  inner.innerHTML = `<div class="drop-error-msg">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px;color:var(--high)"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    <span>${msg}</span>
+  </div>`;
+  setTimeout(() => { inner.innerHTML = orig; }, 2000);
+}
+
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) validateAndSetFile(file);
+});
+
+// ═══════════════════════════════════════════════════════════
+//  ANALYSIS
+// ═══════════════════════════════════════════════════════════
+async function startAnalysis() {
+  const titleInp = document.getElementById('session-title-input');
+  const title = titleInp.value.trim();
+  if (!title) {
+    titleInp.classList.add('input-error');
+    titleInp.focus();
+    titleInp.placeholder = '⚠ Session title is required!';
+    setTimeout(() => { titleInp.classList.remove('input-error'); titleInp.placeholder = 'e.g. Auth module review, API security scan...'; }, 2500);
+    return;
+  }
+
+  if (!selectedFile || !selectedCode) {
+    showFileError('Please select a .py file first.');
+    return;
+  }
+
+  const code     = selectedCode;
+  const filename = selectedFile.name;
+
+  const btn = document.getElementById('analyze-btn');
+  btn.disabled = true; btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Analyzing...`;
+
+  const bar = document.getElementById('proc-bar');
+  const fill = document.getElementById('proc-fill');
+  bar.classList.add('active'); fill.style.width = '15%';
+
+  const prog = setInterval(() => {
+    const cur = parseFloat(fill.style.width);
+    if (cur < 85) fill.style.width = (cur + (85 - cur) * 0.08) + '%';
+  }, 300);
+
+  try {
+    const resp = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, filename, title })
+    });
+    const result = await resp.json();
+
+    clearInterval(prog); fill.style.width = '100%';
+    setTimeout(() => { bar.classList.remove('active'); fill.style.width = '0%'; }, 600);
+
+    const id = nextId++;
+    const session = {
+      id, title,
+      filename,
+      dbId: result._db_session_id || null,
+      _code: code,
+      result,
+      messages: [],
+      highCount:   result.high_count   || 0,
+      mediumCount: result.medium_count || 0,
+    };
+    sessions.unshift(session);
+    activeId = id;
+    renderSidebar();
+
+    const hc = document.getElementById('tab-high-count');
+    if (result.high_count > 0) {
+      hc.textContent = result.high_count; hc.style.display = ''; hc.className = 'tab-count';
+    } else if (result.medium_count > 0) {
+      hc.textContent = result.medium_count; hc.style.display = ''; hc.className = 'tab-count medium';
+    } else { hc.style.display = 'none'; }
+
+    document.getElementById('topbar-file').textContent = filename;
+    document.getElementById('topbar-file').style.display = '';
+    document.getElementById('tabs').style.display = '';
+
+    secFilter = 'all'; secSearch = '';
+    _currentResult = result;
+    renderSecurityResults(result);
+    hidePanel('panel-upload');
+    showPanel('panel-security');
+    switchTab('security');
+    ragReady = true;
+
+    document.getElementById('chat-messages').innerHTML = ragEmptyHTML();
+    titleInp.value = '';
+    removeFile({ stopPropagation: () => {} });
+
+    if (result._db_session_id) {
+      const badge = document.createElement('div');
+      badge.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#1a3a2a;color:#4ade80;border:1px solid #166534;padding:8px 14px;border-radius:8px;font-size:12px;z-index:9999';
+      badge.textContent = '✓ Saved to database (id=' + result._db_session_id + ')';
+      document.body.appendChild(badge);
+      setTimeout(() => badge.remove(), 3000);
+    }
+
+  } catch(err) {
+    clearInterval(prog); bar.classList.remove('active');
+    alert('Analysis failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polygon points="5 3 19 12 5 21 5 3"/></svg> Run Analysis`;
+  }
+}
+
+// Draw donut chart on a canvas element
+function drawDonut(canvasId, high, medium, total) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const R = 48, r = 30;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (total === 0) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.lineWidth = R - r;
+    ctx.strokeStyle = '#1e2030';
+    ctx.stroke();
+    return;
+  }
+
+  const slices = [];
+  if (high > 0)   slices.push({ val: high,   color: '#ff4d6d' });
+  if (medium > 0) slices.push({ val: medium, color: '#f5a623' });
+
+  let start = -Math.PI / 2;
+  slices.forEach(s => {
+    const angle = (s.val / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, (R + r) / 2, start, start + angle);
+    ctx.lineWidth = R - r + 2;
+    ctx.strokeStyle = s.color;
+    ctx.lineCap = 'butt';
+    ctx.stroke();
+    start += angle;
+  });
+
+  // Center text
+  ctx.fillStyle = '#e4e6f0';
+  ctx.font = 'bold 18px Outfit, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(total, cx, cy - 6);
+  ctx.font = '10px Outfit, sans-serif';
+  ctx.fillStyle = '#7a7f96';
+  ctx.fillText('Total', cx, cy + 10);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  FILTER & SEARCH LOGIC
+// ═══════════════════════════════════════════════════════════
+function setFilter(f) {
+  secFilter = f;
+  if (_currentResult) renderIssueList(_currentResult.final_issues || []);
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.f === f));
+}
+
+function onSearchInput(val) {
+  secSearch = val.toLowerCase();
+  if (_currentResult) renderIssueList(_currentResult.final_issues || []);
+}
+
+function getFilteredIssues(issues) {
+  return issues.filter(i => {
+    if (secFilter === 'high' && i.severity !== 'HIGH') return false;
+    if (secFilter === 'medium' && i.severity !== 'MEDIUM') return false;
+    if (secSearch) {
+      const haystack = (i.rule + ' ' + i.message + ' ' + (i.code_snippet||'')).toLowerCase();
+      if (!haystack.includes(secSearch)) return false;
+    }
+    return true;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER SECURITY RESULTS  (main entry point)
+// ═══════════════════════════════════════════════════════════
+function renderSecurityResults(r) {
+  _currentResult = r;
+  const container = document.getElementById('security-content');
+  container.innerHTML = '';
+
+  if (!r.syntax_valid) {
+    container.innerHTML = `<div class="no-issues" style="border-color:var(--high-border);background:var(--high-bg)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:40px;height:40px;color:var(--high)"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      <h3 style="color:var(--high)">Syntax Error</h3>
+      <p>Line ${r.syntax_error?.line || '?'}: ${esc(r.syntax_error?.message || 'Parse failed')}</p>
+    </div>`;
+    return;
+  }
+
+  const high = r.high_count || 0;
+  const medium = r.medium_count || 0;
+  const total = r.total_issues || 0;
+
+  // ── Top summary cards (3 cards: HIGH, MEDIUM, TOTAL) ──
+  const summaryRow = document.createElement('div');
+  summaryRow.className = 'summary-row';
+  summaryRow.innerHTML = `
+    <div class="summary-card ${high > 0 ? 'high-card' : ''}">
+      <div class="card-top-row">
+        <span class="card-label">HIGH</span>
+        <span class="card-icon high-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </span>
+      </div>
+      <span class="card-value red">${high}</span>
+      <span class="card-sub">Critical vulnerabilities</span>
+    </div>
+    <div class="summary-card ${medium > 0 ? 'medium-card' : ''}">
+      <div class="card-top-row">
+        <span class="card-label">MEDIUM</span>
+        <span class="card-icon medium-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+        </span>
+      </div>
+      <span class="card-value orange">${medium}</span>
+      <span class="card-sub">Security weaknesses</span>
+    </div>
+    <div class="summary-card">
+      <div class="card-top-row">
+        <span class="card-label">TOTAL</span>
+        <span class="card-icon neutral-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </span>
+      </div>
+      <span class="card-value">${total}</span>
+      <span class="card-sub">Unique findings</span>
+    </div>`;
+  container.appendChild(summaryRow);
+
+  // ── Charts row ──
+  // Build rule frequency map for top vulnerabilities
+  const ruleCounts = {};
+  (r.final_issues || []).forEach(issue => {
+    const rule = issue.rule || 'Unknown';
+    ruleCounts[rule] = (ruleCounts[rule] || { count: 0, severity: issue.severity });
+    ruleCounts[rule].count++;
+  });
+  const topVulns = Object.entries(ruleCounts)
+    .sort((a, b) => b[1].count - a[1].count);
+
+  const chartsRow = document.createElement('div');
+  chartsRow.className = 'charts-row';
+
+  // Build top-vulns HTML
+  let topVulnsHTML = '';
+  if (topVulns.length === 0) {
+    topVulnsHTML = `<div class="top-vuln-empty">No vulnerabilities found</div>`;
+  } else {
+    const maxCount = topVulns[0][1].count;
+    topVulns.forEach(([rule, info]) => {
+      const pct = Math.round((info.count / maxCount) * 100);
+      const colorVar = info.severity === 'HIGH' ? 'var(--high)' : 'var(--medium)';
+      const colorBg  = info.severity === 'HIGH' ? 'rgba(255,77,109,0.12)' : 'rgba(245,166,35,0.12)';
+      topVulnsHTML += `
+        <div class="top-vuln-row">
+          <div class="top-vuln-left">
+            <span class="top-vuln-dot" style="background:${colorVar}"></span>
+            <span class="top-vuln-name">${esc(rule)}</span>
+          </div>
+          <div class="top-vuln-right">
+            <div class="top-vuln-bar-wrap">
+              <div class="top-vuln-bar-fill" style="width:${pct}%;background:${colorVar};box-shadow:0 0 6px ${colorVar}40"></div>
+            </div>
+            <span class="top-vuln-count" style="color:${colorVar};background:${colorBg}">${info.count}</span>
+          </div>
+        </div>`;
+    });
+  }
+
+  chartsRow.innerHTML = `
+    <div class="chart-card">
+      <div class="chart-card-title">Findings by Severity</div>
+      <div class="donut-wrap">
+        <canvas id="donut-canvas" width="120" height="120"></canvas>
+        <div class="donut-legend">
+          <div class="legend-item"><span class="legend-dot" style="background:#ff4d6d"></span><span class="legend-label">High</span><span class="legend-val">${high} (${total > 0 ? Math.round(high/total*100) : 0}%)</span></div>
+          <div class="legend-item"><span class="legend-dot" style="background:#f5a623"></span><span class="legend-label">Medium</span><span class="legend-val">${medium} (${total > 0 ? Math.round(medium/total*100) : 0}%)</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Top Vulnerabilities</div>
+      <div class="top-vulns-list">${topVulnsHTML}</div>
+    </div>`;
+  container.appendChild(chartsRow);
+
+  // ── Filter toolbar ──
+  const toolbar = document.createElement('div');
+  toolbar.className = 'filter-toolbar';
+  toolbar.innerHTML = `
+    <div class="filter-btns">
+      <button class="filter-btn ${secFilter==='all'?'active':''}" data-f="all" onclick="setFilter('all')">All (${total})</button>
+      <button class="filter-btn ${secFilter==='high'?'active':''}" data-f="high" onclick="setFilter('high')">
+        <span class="filter-dot" style="background:#ff4d6d"></span>High (${high})
+      </button>
+      <button class="filter-btn ${secFilter==='medium'?'active':''}" data-f="medium" onclick="setFilter('medium')">
+        <span class="filter-dot" style="background:#f5a623"></span>Medium (${medium})
+      </button>
+    </div>
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search-input" id="vuln-search" type="text" placeholder="Search vulnerabilities..." value="${esc(secSearch)}" oninput="onSearchInput(this.value)"/>
+    </div>`;
+  container.appendChild(toolbar);
+
+  // ── Issue list container ──
+  const listWrap = document.createElement('div');
+  listWrap.id = 'issue-list-wrap';
+  container.appendChild(listWrap);
+
+  // Draw donut chart after DOM is ready
+  requestAnimationFrame(() => {
+    drawDonut('donut-canvas', high, medium, total);
+  });
+
+  renderIssueList(r.final_issues || []);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER ISSUE LIST (filtered)
+// ═══════════════════════════════════════════════════════════
+function renderIssueList(issues) {
+  const wrap = document.getElementById('issue-list-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+
+  const filtered = getFilteredIssues(issues);
+
+  if (issues.length === 0) {
+    wrap.innerHTML = `<div class="no-issues">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <h3>No vulnerabilities detected</h3>
+      <p>Your code passed all security checks.</p>
+    </div>`;
+    return;
+  }
+
+  if (filtered.length === 0) {
+    wrap.innerHTML = `<div class="no-issues">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <h3>No matching results</h3>
+      <p>Try adjusting your filter or search term.</p>
+    </div>`;
+    return;
+  }
+
+  const highIssues   = filtered.filter(i => i.severity === 'HIGH');
+  const mediumIssues = filtered.filter(i => i.severity === 'MEDIUM');
+
+  if (highIssues.length)   wrap.appendChild(buildIssueSection('HIGH',   highIssues));
+  if (mediumIssues.length) wrap.appendChild(buildIssueSection('MEDIUM', mediumIssues));
+}
+
+function buildIssueSection(sev, issues) {
+  const section = document.createElement('div');
+  section.className = 'issue-section';
+
+  const label = sev === 'HIGH'
+    ? 'Exploitable vulnerabilities — RCE, injection, data breach'
+    : 'Security weaknesses / risky coding practices';
+
+  section.innerHTML = `<div class="issue-section-title">
+    <span class="sev-badge ${sev}">${sev}</span>
+    <span>${issues.length} issue${issues.length > 1 ? 's' : ''}</span>
+    <span style="color:var(--text-muted);font-size:12px;font-weight:400">${label}</span>
+  </div>`;
+
+  issues.forEach((issue, idx) => {
+    const sources = (issue.sources || []).map(s => s.toUpperCase()).join('+') || '?';
+    const card = document.createElement('div');
+    card.className = `issue-card ${sev}`;
+    card.style.animationDelay = (idx * 0.05) + 's';
+    card.id = `issue-${sev}-${idx}`;
+
+    const snippetHTML = issue.code_snippet ? `
+      <div class="issue-snippet">
+        <div class="snippet-bar">
+          <span>code snippet</span>
+          <span>${esc(issue.rule || '')}</span>
+        </div>
+        <pre class="snippet-code">${esc(issue.code_snippet)}</pre>
+      </div>` : '';
+
+    const tipHTML = issue.suggestion ? `
+      <div class="issue-tip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div>
+          <div class="tip-label">Recommended Fix</div>
+          <div class="tip-text">${esc(issue.suggestion)}</div>
+        </div>
+      </div>` : '';
+
+    card.innerHTML = `
+      <div class="issue-header" onclick="toggleIssue('${card.id}')">
+        <span class="issue-num">#${idx + 1}</span>
+        <div class="issue-header-main">
+          <span class="issue-rule">${esc(issue.rule || 'Unknown rule')}</span>
+        </div>
+        <span class="issue-chevron">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
+      </div>
+      <div class="issue-body">
+        <div class="issue-meta-row">
+          <span class="issue-meta-item">
+            <span class="issue-meta-label">Severity</span>
+            <span class="sev-badge ${sev}" style="font-size:9px;padding:2px 7px">${sev}</span>
+          </span>
+          <span class="issue-meta-item">
+            <span class="issue-meta-label">Issue</span>
+            <span class="issue-meta-val">${esc(issue.rule || '')}</span>
+          </span>
+        </div>
+        <div class="issue-desc">
+          <div class="issue-desc-label">Description</div>
+          <p class="issue-msg">${esc(issue.message || '')}</p>
+        </div>
+        ${tipHTML}
+        ${snippetHTML}
+      </div>`;
+    section.appendChild(card);
+  });
+
+  return section;
+}
+
+function toggleIssue(id) {
+  const card = document.getElementById(id);
+  if (card) card.classList.toggle('expanded');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RAG Q&A
+// ═══════════════════════════════════════════════════════════
+function ragEmptyHTML() {
+  return `<div class="rag-empty" id="rag-empty">
+    <div class="rag-empty-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </div>
+    <h3>Ask about your code</h3>
+    <p>code has been indexed · ready for Q&amp;A</p>
+    <div class="rag-suggestions">
+      <span class="rag-suggestion" onclick="askSuggestion(this)">What security issues exist?</span>
+      <span class="rag-suggestion" onclick="askSuggestion(this)">List all functions</span>
+      <span class="rag-suggestion" onclick="askSuggestion(this)">How does authentication work?</span>
+      <span class="rag-suggestion" onclick="askSuggestion(this)">What external libraries are used?</span>
+    </div>
+  </div>`;
+}
+
+function askSuggestion(el) {
+  document.getElementById('rag-input').value = el.textContent;
+  sendRagQuery();
+}
+
+async function sendRagQuery() {
+  if (!ragReady) {
+    alert('Please run an analysis first before asking questions.');
+    switchTab('security');
+    return;
+  }
+  const ta = document.getElementById('rag-input');
+  const q = ta.value.trim();
+  if (!q) return;
+
+  const s = sessions.find(x => x.id === activeId);
+  if (!s) return;
+
+  ta.value = '';
+  ta.style.height = 'auto';
+
+  const empty = document.getElementById('rag-empty');
+  if (empty) empty.remove();
+
+  renderMessage('user', q);
+  if (s.messages) s.messages.push({ role: 'user', content: q });
+
+  const container = document.getElementById('chat-messages');
+  const typingEl = document.createElement('div');
+  typingEl.className = 'msg assistant';
+  typingEl.id = 'typing-msg';
+  typingEl.innerHTML = `<div class="msg-bubble" style="padding:14px 16px">
+    <div class="typing-indicator">
+      <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+    </div>
+  </div>`;
+  container.appendChild(typingEl);
+  container.scrollTop = container.scrollHeight;
+
+  document.getElementById('rag-send').disabled = true;
+
+  try {
+    const code = (s._code || '');
+    const resp = await fetch('/api/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question: q,
+        code,
+        db_session_id: s.dbId || null
+      })
+    });
+    const data = await resp.json();
+    typingEl.remove();
+
+    const answer = data.answer || data.error || 'No answer returned.';
+    renderMessage('assistant', answer);
+    if (s.messages) s.messages.push({ role: 'assistant', content: answer });
+
+    if (data.query_type) {
+      const lastMsg = container.lastElementChild;
+      if (lastMsg) {
+        const meta = document.createElement('div');
+        meta.className = 'msg-meta';
+        meta.style.alignSelf = 'flex-start';
+        meta.textContent = `[${data.query_type}] · ${data.chunks_used || 0} chunks · ${(data.retrieval_time || 0).toFixed(2)}s`;
+        container.appendChild(meta);
+      }
+    }
+
+  } catch(err) {
+    typingEl.remove();
+    renderMessage('assistant', '❌ Query failed: ' + err.message);
+  } finally {
+    document.getElementById('rag-send').disabled = false;
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+function renderMessage(role, content, scroll = true) {
+  const container = document.getElementById('chat-messages');
+  const wrapper = document.createElement('div');
+  wrapper.className = 'msg ' + role;
+
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+
+  let html = content
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  if (role === 'assistant') {
+    html = html.replace(/^###\s+(.+)$/gm, '<span class="md-heading">$1</span>');
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="md-bold">$1</strong>');
+    html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+    html = html.replace(/\n/g, '<br>');
+  } else {
+    html = html.replace(/\n/g, '<br>');
+  }
+
+  bubble.innerHTML = html;
+  wrapper.appendChild(bubble);
+  container.appendChild(wrapper);
+  if (scroll) container.scrollTop = container.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TEXTAREA AUTO-RESIZE
+// ═══════════════════════════════════════════════════════════
+const ragTa = document.getElementById('rag-input');
+ragTa.addEventListener('input', () => {
+  ragTa.style.height = 'auto';
+  ragTa.style.height = Math.min(ragTa.scrollHeight, 140) + 'px';
+});
+ragTa.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendRagQuery(); }
+});
+
+document.head.insertAdjacentHTML('beforeend',
+  `<style>@keyframes spin{to{transform:rotate(360deg)}}</style>`);
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+(function initPanels() {
+  ['panel-security', 'panel-rag'].forEach(id => {
+    const p = document.getElementById(id);
+    if (p) { p.classList.remove('active'); p.style.display = 'none'; }
+  });
+  const up = document.getElementById('panel-upload');
+  if (up) { up.classList.add('active'); up.style.display = 'flex'; }
+})();
+
+renderSidebar();
+loadPastSessions();
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeDropdown(); });
+</script>
+</body>
+</html>

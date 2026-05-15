@@ -1,0 +1,973 @@
+{
+  "metadata": [
+    {
+      "chunk_id": 0,
+      "content": "import random\nimport os\nimport datetime\n    import pickle",
+      "chunk_type": "imports",
+      "name": "imports",
+      "line_start": 2,
+      "line_count": 4,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 1,
+      "content": "def add_book(book_id, title, author, isbn=None, publisher=None, year=None):\n    book_data = {\n        \"id\": book_id,\n        \"title\": title,\n        \"author\": author,\n        \"isbn\": isbn,\n        \"publisher\": publisher,\n        \"year\": year,\n        \"available\": True,\n        \"condition\": \"good\",\n        \"borrow_count\": 0,\n        \"date_added\": datetime.datetime.now()\n    }\n    library.append(book_data)\n    \n    print(\"Book added successfully\")\n    print(f\"Title: {title}\")\n    print(f\"Author: {author}\")\n    print(f\"Book ID: {book_id}\")\n    \n    if len(library) > 100:\n        print(\"Warning: Library is getting large\")\n    \n    return True",
+      "chunk_type": "function",
+      "name": "add_book",
+      "line_start": 14,
+      "line_count": 24,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "append",
+        "len",
+        "now"
+      ],
+      "called_by": [
+        "bulk_add_books",
+        "main"
+      ],
+      "related_functions": [
+        "now",
+        "bulk_add_books",
+        "print",
+        "append",
+        "len",
+        "main"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 2,
+      "content": "def remove_book(book_id):\n    found = False\n    for book in library:\n        if book[\"id\"] == book_id:\n            library.remove(book)\n            print(\"Book removed\")\n            found = True\n            \n            if book_id in reservation_queue:\n                print(\"Warning: This book had reservations\")\n            \n            for username in borrowed_books:\n                if book_id in borrowed_books[username]:\n                    print(f\"Warning: Book was borrowed by {username}\")\n    \n    if not found:\n        print(\"Book not found in library\")\n    \n    return found",
+      "chunk_type": "function",
+      "name": "remove_book",
+      "line_start": 39,
+      "line_count": 19,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "remove"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "print",
+        "remove",
+        "main"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 3,
+      "content": "def register_user(username, password, email, phone=None):\n    users[username] = password\n    borrowed_books[username] = []\n    late_fees[username] = 0.0\n    \n    print(f\"User {username} registered\")\n    print(f\"Email: {email}\")\n    \n    if phone:\n        print(f\"Phone: {phone}\")\n    \n    user_count = len(users)\n    print(f\"Total registered users: {user_count}\")\n    \n    if user_count > 50:\n        print(\"Library membership is growing!\")\n    \n    return True",
+      "chunk_type": "function",
+      "name": "register_user",
+      "line_start": 59,
+      "line_count": 18,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "len"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "print",
+        "len",
+        "main"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 4,
+      "content": "def authenticate_user(username, password):\n    if username in users:\n        stored_password = users[username]\n        if stored_password == password:\n            print(f\"Authentication successful for {username}\")\n            return True\n        else:\n            print(\"Invalid password\")\n            return False\n    else:\n        print(\"Username not found\")\n        return False",
+      "chunk_type": "function",
+      "name": "authenticate_user",
+      "line_start": 78,
+      "line_count": 12,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print"
+      ],
+      "called_by": [],
+      "related_functions": [
+        "print"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 5,
+      "content": "def borrow_book(username, password, book_id):\n    if username in users and users[username] == password:\n        current_borrowed = borrowed_books[username]\n        \n        if len(current_borrowed) >= MAX_BORROW_LIMIT:\n            print(f\"Borrow limit reached. Maximum {MAX_BORROW_LIMIT} books allowed\")\n            return False\n        \n        for book in library:\n            if book[\"id\"] == book_id:\n                if book[\"available\"]:\n                    book[\"available\"] = False\n                    book[\"borrow_count\"] += 1\n                    borrowed_books[username].append(book_id)\n                    \n                    print(\"Book borrowed successfully\")\n                    print(f\"Book: {book['title']}\")\n                    print(f\"Author: {book['author']}\")\n                    print(f\"Please return within 14 days\")\n                    print(f\"You have {len(borrowed_books[username])} books borrowed\")\n                    \n                    return True\n                else:\n                    print(\"Book not available\")\n                    print(\"Would you like to reserve this book?\")\n                    return False\n        \n        print(\"Book not found in library\")\n        return False\n    else:\n        print(\"Authentication failed\")\n        print(\"Please check your username and password\")\n        return False",
+      "chunk_type": "function",
+      "name": "borrow_book",
+      "line_start": 91,
+      "line_count": 33,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "append",
+        "len"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "print",
+        "append",
+        "len",
+        "main"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 6,
+      "content": "def return_book(username, book_id, days_late=0):\n    for book in library:\n        if book[\"id\"] == book_id:\n            book[\"available\"] = True\n            borrowed_books[username].remove(book_id)\n            \n            print(\"Book returned successfully\")\n            print(f\"Book: {book['title']}\")\n            \n            if days_late > 0:\n                fine = calculate_fine(username, book_id, days_late)\n                late_fees[username] += fine\n                print(f\"Late fee: ${fine}\")\n                print(f\"Total outstanding fees: ${late_fees[username]}\")\n            else:\n                print(\"Returned on time. No fees charged\")\n            \n            print(f\"You now have {len(borrowed_books[username])} books borrowed\")\n            \n            if len(reservation_queue) > 0:\n                print(\"This book has pending reservations\")\n            \n            return True\n    \n    print(\"Book not found\")\n    return False",
+      "chunk_type": "function",
+      "name": "return_book",
+      "line_start": 125,
+      "line_count": 26,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "calculate_fine",
+        "remove",
+        "len"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "len",
+        "print",
+        "calculate_fine",
+        "remove",
+        "main"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 7,
+      "content": "def search_books(query, search_type=\"title\"):\n    results = []\n    query_lower = query.lower()\n    \n    for book in library:\n        if search_type == \"title\":\n            if query in book[\"title\"]:\n                results.append(book)\n        elif search_type == \"author\":\n            if query in book[\"author\"]:\n                results.append(book)\n        elif search_type == \"isbn\":\n            if book[\"isbn\"] and query in book[\"isbn\"]:\n                results.append(book)\n        else:\n            if query in book[\"title\"] or query in book[\"author\"]:\n                results.append(book)\n    \n    print(f\"Found {len(results)} results for '{query}'\")\n    \n    for book in results:\n        print(f\"\\nID: {book['id']}\")\n        print(f\"Title: {book['title']}\")\n        print(f\"Author: {book['author']}\")\n        print(f\"Available: {book['available']}\")\n    \n    if len(results) > 0:\n        return results\n    else:\n        print(\"No books found matching your search\")",
+      "chunk_type": "function",
+      "name": "search_books",
+      "line_start": 152,
+      "line_count": 30,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "lower",
+        "append",
+        "len"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "lower",
+        "print",
+        "append",
+        "len",
+        "main"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 8,
+      "content": "def list_books(filter_available=False, sort_by=\"title\"):\n    if len(library) == 0:\n        print(\"Library is empty\")\n        return\n    \n    books_to_show = library\n    \n    if filter_available:\n        books_to_show = [book for book in library if book[\"available\"]]\n    \n    if sort_by == \"title\":\n        books_to_show = sorted(books_to_show, key=lambda x: x[\"title\"])\n    elif sort_by == \"author\":\n        books_to_show = sorted(books_to_show, key=lambda x: x[\"author\"])\n    elif sort_by == \"popularity\":\n        books_to_show = sorted(books_to_show, key=lambda x: x[\"borrow_count\"], reverse=True)\n    \n    print(f\"\\nListing {len(books_to_show)} books:\")\n    print(\"-\" * 50)\n    \n    for book in books_to_show:\n        print(f\"ID: {book['id']}\")\n        print(f\"Title: {book['title']}\")\n        print(f\"Author: {book['author']}\")\n        print(f\"Available: {book['available']}\")\n        print(f\"Condition: {book['condition']}\")\n        print(f\"Times borrowed: {book['borrow_count']}\")\n        print(\"-\" * 50)",
+      "chunk_type": "function",
+      "name": "list_books",
+      "line_start": 183,
+      "line_count": 28,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "len",
+        "sorted"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "print",
+        "len",
+        "main",
+        "sorted"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 9,
+      "content": "def get_user_borrowed_books(username):\n    if username not in borrowed_books:\n        print(\"User not found\")\n        return []\n    \n    user_books = borrowed_books[username]\n    \n    print(f\"\\n{username} has borrowed {len(user_books)} books:\")\n    \n    for book_id in user_books:\n        for book in library:\n            if book[\"id\"] == book_id:\n                print(f\"- {book['title']} by {book['author']}\")\n    \n    return user_books",
+      "chunk_type": "function",
+      "name": "get_user_borrowed_books",
+      "line_start": 212,
+      "line_count": 15,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "len"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "print",
+        "len",
+        "main"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 10,
+      "content": "def calculate_fine(username, book_id, days_overdue):\n    fine_per_day = 2.50\n    max_fine = 100\n    base_fine = 5.00\n    \n    total_fine = base_fine + (days_overdue * fine_per_day)\n    \n    if total_fine > 200:\n        pass\n    \n    if days_overdue > 30:\n        print(\"Book is severely overdue!\")\n        total_fine = total_fine * 1.5\n    \n    if days_overdue > 60:\n        print(\"Book may be considered lost\")\n    \n    return total_fine",
+      "chunk_type": "function",
+      "name": "calculate_fine",
+      "line_start": 228,
+      "line_count": 18,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print"
+      ],
+      "called_by": [
+        "return_book"
+      ],
+      "related_functions": [
+        "return_book",
+        "print"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 11,
+      "content": "def reserve_book(username, book_id):\n    reservation = {\n        \"username\": username,\n        \"book_id\": book_id,\n        \"date\": datetime.datetime.now(),\n        \"notified\": False\n    }\n    \n    reservation_queue.append(reservation)\n    \n    print(f\"Book reserved for {username}\")\n    print(f\"Book ID: {book_id}\")\n    print(f\"Position in queue: {len(reservation_queue)}\")\n    \n    for book in library:\n        if book[\"id\"] == book_id:\n            print(f\"Book: {book['title']}\")\n            if book[\"available\"]:\n                print(\"Book is currently available for immediate borrow\")\n    \n    return True",
+      "chunk_type": "function",
+      "name": "reserve_book",
+      "line_start": 247,
+      "line_count": 21,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "append",
+        "len",
+        "now"
+      ],
+      "called_by": [],
+      "related_functions": [
+        "print",
+        "append",
+        "len",
+        "now"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 12,
+      "content": "def load_config(filename):\n    global library_config\n    \n    try:\n        with open(filename, 'r') as f:\n            config_str = f.read()\n            library_config = eval(config_str)\n            \n            print(\"Configuration loaded successfully\")\n            print(f\"Config file: {filename}\")\n            \n            if \"max_borrow_limit\" in library_config:\n                global MAX_BORROW_LIMIT\n                MAX_BORROW_LIMIT = library_config[\"max_borrow_limit\"]\n                print(f\"Borrow limit set to: {MAX_BORROW_LIMIT}\")\n    except:\n        print(\"Error loading configuration\")",
+      "chunk_type": "function",
+      "name": "load_config",
+      "line_start": 269,
+      "line_count": 17,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "eval",
+        "open",
+        "read",
+        "print"
+      ],
+      "called_by": [],
+      "related_functions": [
+        "eval",
+        "open",
+        "read",
+        "print"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 13,
+      "content": "def backup_library(filename=\"/tmp/library_backup.pkl\"):\n    import pickle\n    \n    backup_data = {\n        \"library\": library,\n        \"users\": users,\n        \"borrowed_books\": borrowed_books,\n        \"reservation_queue\": reservation_queue,\n        \"late_fees\": late_fees,\n        \"backup_date\": datetime.datetime.now()\n    }\n    \n    with open(filename, 'wb') as f:\n        pickle.dump(backup_data, f)\n    \n    print(f\"Backup created: {filename}\")\n    print(f\"Total books backed up: {len(library)}\")\n    print(f\"Total users backed up: {len(users)}\")",
+      "chunk_type": "function",
+      "name": "backup_library",
+      "line_start": 287,
+      "line_count": 18,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "dump",
+        "print",
+        "len",
+        "open",
+        "now"
+      ],
+      "called_by": [],
+      "related_functions": [
+        "dump",
+        "open",
+        "print",
+        "now",
+        "len"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 14,
+      "content": "def generate_report():\n    total_books = len(library)\n    available_books = 0\n    borrowed_count = 0\n    \n    for book in library:\n        if book[\"available\"]:\n            available_books += 1\n        else:\n            borrowed_count += 1\n    \n    availability_rate = (available_books / total_books) * 100\n    \n    print(\"\\n\" + \"=\"*50)\n    print(\"LIBRARY STATISTICS REPORT\")\n    print(\"=\"*50)\n    print(f\"Total Books: {total_books}\")\n    print(f\"Available: {available_books}\")\n    print(f\"Currently Borrowed: {borrowed_count}\")\n    print(f\"Availability Rate: {availability_rate:.2f}%\")\n    print(f\"Total Users: {len(users)}\")\n    print(f\"Active Reservations: {len(reservation_queue)}\")\n    \n    total_fees = 0\n    for username in late_fees:\n        total_fees += late_fees[username]\n    \n    print(f\"Total Outstanding Fees: ${total_fees:.2f}\")\n    print(\"=\"*50)\n    \n    return None\n    print(\"Report generated\")",
+      "chunk_type": "function",
+      "name": "generate_report",
+      "line_start": 306,
+      "line_count": 32,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "len"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "print",
+        "len",
+        "main"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 15,
+      "content": "def update_book_condition(book_id, condition):\n    found = False\n    valid_conditions = [\"excellent\", \"good\", \"fair\", \"poor\", \"damaged\"]\n    \n    if condition not in valid_conditions:\n        print(\"Invalid condition specified\")\n        return False\n    \n    for book in library:\n        if book[\"id\"] == book_id:\n            old_condition = book[\"condition\"]\n            book[\"condition\"] = condition\n            found = True\n            \n            print(f\"Book condition updated\")\n            print(f\"Book: {book['title']}\")\n            print(f\"Old condition: {old_condition}\")\n            print(f\"New condition: {condition}\")\n            \n            if condition == \"damaged\":\n                print(\"Warning: Book marked as damaged\")\n                print(\"Consider removing from circulation\")\n            \n            break\n    \n    if not found:\n        print(\"Book not found\")\n    \n    return found",
+      "chunk_type": "function",
+      "name": "update_book_condition",
+      "line_start": 339,
+      "line_count": 29,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print"
+      ],
+      "called_by": [],
+      "related_functions": [
+        "print"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 16,
+      "content": "def bulk_add_books(book_list):\n    count = 0\n    failed = 0\n    \n    for book_data in book_list:\n        try:\n            add_book(book_data[0], book_data[1], book_data[2])\n            count += 1\n        except:\n            failed += 1\n            print(f\"Failed to add book: {book_data}\")\n    \n    print(f\"\\n{count} books added successfully\")\n    \n    if failed > 0:\n        print(f\"{failed} books failed to add\")\n    \n    print(f\"Total books in library: {len(library)}\")",
+      "chunk_type": "function",
+      "name": "bulk_add_books",
+      "line_start": 369,
+      "line_count": 18,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "len",
+        "add_book"
+      ],
+      "called_by": [],
+      "related_functions": [
+        "print",
+        "len",
+        "add_book"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 17,
+      "content": "def admin_reset_password(username, new_password):\n    if username in users:\n        old_password = users[username]\n        users[username] = new_password\n        \n        print(f\"Password reset for {username}\")\n        print(\"User has been notified\")\n        \n        if len(new_password) < 6:\n            print(\"Warning: Password is weak\")\n    else:\n        print(\"User not found\")\n        print(f\"Username: {username} does not exist in system\")",
+      "chunk_type": "function",
+      "name": "admin_reset_password",
+      "line_start": 388,
+      "line_count": 13,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "len"
+      ],
+      "called_by": [],
+      "related_functions": [
+        "print",
+        "len"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 18,
+      "content": "def process_reservations():\n    processed = 0\n    \n    for reservation in reservation_queue:\n        book_id = reservation[\"book_id\"]\n        username = reservation[\"username\"]\n        \n        for book in library:\n            if book[\"id\"] == book_id:\n                if book[\"available\"] and not reservation[\"notified\"]:\n                    print(f\"Notifying {username} that {book['title']} is available\")\n                    reservation[\"notified\"] = True\n                    processed += 1\n    \n    print(f\"Processed {processed} reservations\")\n    return processed",
+      "chunk_type": "function",
+      "name": "process_reservations",
+      "line_start": 402,
+      "line_count": 16,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print"
+      ],
+      "called_by": [],
+      "related_functions": [
+        "print"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 19,
+      "content": "def main():\n    while True:\n        print(\"\\n\" + \"=\"*50)\n        print(\"LIBRARY MANAGEMENT SYSTEM\")\n        print(\"=\"*50)\n        print(\"1. Add Book\")\n        print(\"2. Remove Book\")\n        print(\"3. Register User\")\n        print(\"4. Borrow Book\")\n        print(\"5. Return Book\")\n        print(\"6. Search Books\")\n        print(\"7. List All Books\")\n        print(\"8. View My Books\")\n        print(\"9. Generate Report\")\n        print(\"10. Exit\")\n        print(\"=\"*50)\n        \n        choice = int(input(\"Enter choice: \"))\n        \n        if choice == 1:\n            book_id = input(\"Book ID: \")\n            title = input(\"Title: \")\n            author = input(\"Author: \")\n            isbn = input(\"ISBN (optional): \")\n            publisher = input(\"Publisher (optional): \")\n            add_book(book_id, title, author, isbn, publisher)\n            \n        elif choice == 2:\n            book_id = input(\"Book ID to remove: \")\n            remove_book(book_id)\n            \n        elif choice == 3:\n            username = input(\"Username: \")\n            password = input(\"Password: \")\n            email = input(\"Email: \")\n            phone = input(\"Phone (optional): \")\n            register_user(username, password, email, phone)\n            \n        elif choice == 4:\n            username = input(\"Username: \")\n            password = input(\"Password: \")\n            book_id = input(\"Book ID: \")\n            borrow_book(username, password, book_id)\n            \n        elif choice == 5:\n            username = input(\"Username: \")\n            book_id = input(\"Book ID: \")\n            days_late = int(input(\"Days late (0 if on time): \"))\n            return_book(username, book_id, days_late)\n            \n        elif choice == 6:\n            query = input(\"Search query: \")\n            search_type = input(\"Search by (title/author/isbn): \")\n            search_books(query, search_type)\n            \n        elif choice == 7:\n            filter_choice = input(\"Show only available? (y/n): \")\n            filter_available = filter_choice.lower() == 'y'\n            sort_by = input(\"Sort by (title/author/popularity): \")\n            list_books(filter_available, sort_by)\n            \n        elif choice == 8:\n            username = input(\"Username: \")\n            get_user_borrowed_books(username)\n            \n        elif choice == 9:\n            generate_report()\n            \n        elif choice == 10:\n            print(\"Thank you for using Library Management System\")\n            break",
+      "chunk_type": "function",
+      "name": "main",
+      "line_start": 422,
+      "line_count": 71,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "search_books",
+        "borrow_book",
+        "int",
+        "print",
+        "add_book",
+        "get_user_borrowed_books",
+        "generate_report",
+        "remove_book",
+        "register_user",
+        "list_books",
+        "lower",
+        "return_book",
+        "input"
+      ],
+      "called_by": [],
+      "related_functions": [
+        "search_books",
+        "borrow_book",
+        "int",
+        "print",
+        "add_book",
+        "get_user_borrowed_books",
+        "generate_report",
+        "remove_book",
+        "register_user",
+        "list_books",
+        "lower",
+        "return_book",
+        "input"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    }
+  ],
+  "original_code": "# Library Management System\n\nimport random\nimport os\nimport datetime\n\nlibrary = []\nusers = {}\nborrowed_books = {}\nreservation_queue = []\nlibrary_config = None\nMAX_BORROW_LIMIT = 5\nlate_fees = {}\n\ndef add_book(book_id, title, author, isbn=None, publisher=None, year=None):\n    book_data = {\n        \"id\": book_id,\n        \"title\": title,\n        \"author\": author,\n        \"isbn\": isbn,\n        \"publisher\": publisher,\n        \"year\": year,\n        \"available\": True,\n        \"condition\": \"good\",\n        \"borrow_count\": 0,\n        \"date_added\": datetime.datetime.now()\n    }\n    library.append(book_data)\n    \n    print(\"Book added successfully\")\n    print(f\"Title: {title}\")\n    print(f\"Author: {author}\")\n    print(f\"Book ID: {book_id}\")\n    \n    if len(library) > 100:\n        print(\"Warning: Library is getting large\")\n    \n    return True\n\ndef remove_book(book_id):\n    found = False\n    for book in library:\n        if book[\"id\"] == book_id:\n            library.remove(book)\n            print(\"Book removed\")\n            found = True\n            \n            if book_id in reservation_queue:\n                print(\"Warning: This book had reservations\")\n            \n            for username in borrowed_books:\n                if book_id in borrowed_books[username]:\n                    print(f\"Warning: Book was borrowed by {username}\")\n    \n    if not found:\n        print(\"Book not found in library\")\n    \n    return found\n\ndef register_user(username, password, email, phone=None):\n    users[username] = password\n    borrowed_books[username] = []\n    late_fees[username] = 0.0\n    \n    print(f\"User {username} registered\")\n    print(f\"Email: {email}\")\n    \n    if phone:\n        print(f\"Phone: {phone}\")\n    \n    user_count = len(users)\n    print(f\"Total registered users: {user_count}\")\n    \n    if user_count > 50:\n        print(\"Library membership is growing!\")\n    \n    return True\n\ndef authenticate_user(username, password):\n    if username in users:\n        stored_password = users[username]\n        if stored_password == password:\n            print(f\"Authentication successful for {username}\")\n            return True\n        else:\n            print(\"Invalid password\")\n            return False\n    else:\n        print(\"Username not found\")\n        return False\n\ndef borrow_book(username, password, book_id):\n    if username in users and users[username] == password:\n        current_borrowed = borrowed_books[username]\n        \n        if len(current_borrowed) >= MAX_BORROW_LIMIT:\n            print(f\"Borrow limit reached. Maximum {MAX_BORROW_LIMIT} books allowed\")\n            return False\n        \n        for book in library:\n            if book[\"id\"] == book_id:\n                if book[\"available\"]:\n                    book[\"available\"] = False\n                    book[\"borrow_count\"] += 1\n                    borrowed_books[username].append(book_id)\n                    \n                    print(\"Book borrowed successfully\")\n                    print(f\"Book: {book['title']}\")\n                    print(f\"Author: {book['author']}\")\n                    print(f\"Please return within 14 days\")\n                    print(f\"You have {len(borrowed_books[username])} books borrowed\")\n                    \n                    return True\n                else:\n                    print(\"Book not available\")\n                    print(\"Would you like to reserve this book?\")\n                    return False\n        \n        print(\"Book not found in library\")\n        return False\n    else:\n        print(\"Authentication failed\")\n        print(\"Please check your username and password\")\n        return False\n\ndef return_book(username, book_id, days_late=0):\n    for book in library:\n        if book[\"id\"] == book_id:\n            book[\"available\"] = True\n            borrowed_books[username].remove(book_id)\n            \n            print(\"Book returned successfully\")\n            print(f\"Book: {book['title']}\")\n            \n            if days_late > 0:\n                fine = calculate_fine(username, book_id, days_late)\n                late_fees[username] += fine\n                print(f\"Late fee: ${fine}\")\n                print(f\"Total outstanding fees: ${late_fees[username]}\")\n            else:\n                print(\"Returned on time. No fees charged\")\n            \n            print(f\"You now have {len(borrowed_books[username])} books borrowed\")\n            \n            if len(reservation_queue) > 0:\n                print(\"This book has pending reservations\")\n            \n            return True\n    \n    print(\"Book not found\")\n    return False\n\ndef search_books(query, search_type=\"title\"):\n    results = []\n    query_lower = query.lower()\n    \n    for book in library:\n        if search_type == \"title\":\n            if query in book[\"title\"]:\n                results.append(book)\n        elif search_type == \"author\":\n            if query in book[\"author\"]:\n                results.append(book)\n        elif search_type == \"isbn\":\n            if book[\"isbn\"] and query in book[\"isbn\"]:\n                results.append(book)\n        else:\n            if query in book[\"title\"] or query in book[\"author\"]:\n                results.append(book)\n    \n    print(f\"Found {len(results)} results for '{query}'\")\n    \n    for book in results:\n        print(f\"\\nID: {book['id']}\")\n        print(f\"Title: {book['title']}\")\n        print(f\"Author: {book['author']}\")\n        print(f\"Available: {book['available']}\")\n    \n    if len(results) > 0:\n        return results\n    else:\n        print(\"No books found matching your search\")\n\ndef list_books(filter_available=False, sort_by=\"title\"):\n    if len(library) == 0:\n        print(\"Library is empty\")\n        return\n    \n    books_to_show = library\n    \n    if filter_available:\n        books_to_show = [book for book in library if book[\"available\"]]\n    \n    if sort_by == \"title\":\n        books_to_show = sorted(books_to_show, key=lambda x: x[\"title\"])\n    elif sort_by == \"author\":\n        books_to_show = sorted(books_to_show, key=lambda x: x[\"author\"])\n    elif sort_by == \"popularity\":\n        books_to_show = sorted(books_to_show, key=lambda x: x[\"borrow_count\"], reverse=True)\n    \n    print(f\"\\nListing {len(books_to_show)} books:\")\n    print(\"-\" * 50)\n    \n    for book in books_to_show:\n        print(f\"ID: {book['id']}\")\n        print(f\"Title: {book['title']}\")\n        print(f\"Author: {book['author']}\")\n        print(f\"Available: {book['available']}\")\n        print(f\"Condition: {book['condition']}\")\n        print(f\"Times borrowed: {book['borrow_count']}\")\n        print(\"-\" * 50)\n\ndef get_user_borrowed_books(username):\n    if username not in borrowed_books:\n        print(\"User not found\")\n        return []\n    \n    user_books = borrowed_books[username]\n    \n    print(f\"\\n{username} has borrowed {len(user_books)} books:\")\n    \n    for book_id in user_books:\n        for book in library:\n            if book[\"id\"] == book_id:\n                print(f\"- {book['title']} by {book['author']}\")\n    \n    return user_books\n\ndef calculate_fine(username, book_id, days_overdue):\n    fine_per_day = 2.50\n    max_fine = 100\n    base_fine = 5.00\n    \n    total_fine = base_fine + (days_overdue * fine_per_day)\n    \n    if total_fine > 200:\n        pass\n    \n    if days_overdue > 30:\n        print(\"Book is severely overdue!\")\n        total_fine = total_fine * 1.5\n    \n    if days_overdue > 60:\n        print(\"Book may be considered lost\")\n    \n    return total_fine\n\ndef reserve_book(username, book_id):\n    reservation = {\n        \"username\": username,\n        \"book_id\": book_id,\n        \"date\": datetime.datetime.now(),\n        \"notified\": False\n    }\n    \n    reservation_queue.append(reservation)\n    \n    print(f\"Book reserved for {username}\")\n    print(f\"Book ID: {book_id}\")\n    print(f\"Position in queue: {len(reservation_queue)}\")\n    \n    for book in library:\n        if book[\"id\"] == book_id:\n            print(f\"Book: {book['title']}\")\n            if book[\"available\"]:\n                print(\"Book is currently available for immediate borrow\")\n    \n    return True\n\ndef load_config(filename):\n    global library_config\n    \n    try:\n        with open(filename, 'r') as f:\n            config_str = f.read()\n            library_config = eval(config_str)\n            \n            print(\"Configuration loaded successfully\")\n            print(f\"Config file: {filename}\")\n            \n            if \"max_borrow_limit\" in library_config:\n                global MAX_BORROW_LIMIT\n                MAX_BORROW_LIMIT = library_config[\"max_borrow_limit\"]\n                print(f\"Borrow limit set to: {MAX_BORROW_LIMIT}\")\n    except:\n        print(\"Error loading configuration\")\n\ndef backup_library(filename=\"/tmp/library_backup.pkl\"):\n    import pickle\n    \n    backup_data = {\n        \"library\": library,\n        \"users\": users,\n        \"borrowed_books\": borrowed_books,\n        \"reservation_queue\": reservation_queue,\n        \"late_fees\": late_fees,\n        \"backup_date\": datetime.datetime.now()\n    }\n    \n    with open(filename, 'wb') as f:\n        pickle.dump(backup_data, f)\n    \n    print(f\"Backup created: {filename}\")\n    print(f\"Total books backed up: {len(library)}\")\n    print(f\"Total users backed up: {len(users)}\")\n\ndef generate_report():\n    total_books = len(library)\n    available_books = 0\n    borrowed_count = 0\n    \n    for book in library:\n        if book[\"available\"]:\n            available_books += 1\n        else:\n            borrowed_count += 1\n    \n    availability_rate = (available_books / total_books) * 100\n    \n    print(\"\\n\" + \"=\"*50)\n    print(\"LIBRARY STATISTICS REPORT\")\n    print(\"=\"*50)\n    print(f\"Total Books: {total_books}\")\n    print(f\"Available: {available_books}\")\n    print(f\"Currently Borrowed: {borrowed_count}\")\n    print(f\"Availability Rate: {availability_rate:.2f}%\")\n    print(f\"Total Users: {len(users)}\")\n    print(f\"Active Reservations: {len(reservation_queue)}\")\n    \n    total_fees = 0\n    for username in late_fees:\n        total_fees += late_fees[username]\n    \n    print(f\"Total Outstanding Fees: ${total_fees:.2f}\")\n    print(\"=\"*50)\n    \n    return None\n    print(\"Report generated\")\n\ndef update_book_condition(book_id, condition):\n    found = False\n    valid_conditions = [\"excellent\", \"good\", \"fair\", \"poor\", \"damaged\"]\n    \n    if condition not in valid_conditions:\n        print(\"Invalid condition specified\")\n        return False\n    \n    for book in library:\n        if book[\"id\"] == book_id:\n            old_condition = book[\"condition\"]\n            book[\"condition\"] = condition\n            found = True\n            \n            print(f\"Book condition updated\")\n            print(f\"Book: {book['title']}\")\n            print(f\"Old condition: {old_condition}\")\n            print(f\"New condition: {condition}\")\n            \n            if condition == \"damaged\":\n                print(\"Warning: Book marked as damaged\")\n                print(\"Consider removing from circulation\")\n            \n            break\n    \n    if not found:\n        print(\"Book not found\")\n    \n    return found\n\ndef bulk_add_books(book_list):\n    count = 0\n    failed = 0\n    \n    for book_data in book_list:\n        try:\n            add_book(book_data[0], book_data[1], book_data[2])\n            count += 1\n        except:\n            failed += 1\n            print(f\"Failed to add book: {book_data}\")\n    \n    print(f\"\\n{count} books added successfully\")\n    \n    if failed > 0:\n        print(f\"{failed} books failed to add\")\n    \n    print(f\"Total books in library: {len(library)}\")\n\ndef admin_reset_password(username, new_password):\n    if username in users:\n        old_password = users[username]\n        users[username] = new_password\n        \n        print(f\"Password reset for {username}\")\n        print(\"User has been notified\")\n        \n        if len(new_password) < 6:\n            print(\"Warning: Password is weak\")\n    else:\n        print(\"User not found\")\n        print(f\"Username: {username} does not exist in system\")\n\ndef process_reservations():\n    processed = 0\n    \n    for reservation in reservation_queue:\n        book_id = reservation[\"book_id\"]\n        username = reservation[\"username\"]\n        \n        for book in library:\n            if book[\"id\"] == book_id:\n                if book[\"available\"] and not reservation[\"notified\"]:\n                    print(f\"Notifying {username} that {book['title']} is available\")\n                    reservation[\"notified\"] = True\n                    processed += 1\n    \n    print(f\"Processed {processed} reservations\")\n    return processed\n\nprint(\"Library Management System Initialized\")\nrandom_seed = random.randint(1, 100)\n\ndef main():\n    while True:\n        print(\"\\n\" + \"=\"*50)\n        print(\"LIBRARY MANAGEMENT SYSTEM\")\n        print(\"=\"*50)\n        print(\"1. Add Book\")\n        print(\"2. Remove Book\")\n        print(\"3. Register User\")\n        print(\"4. Borrow Book\")\n        print(\"5. Return Book\")\n        print(\"6. Search Books\")\n        print(\"7. List All Books\")\n        print(\"8. View My Books\")\n        print(\"9. Generate Report\")\n        print(\"10. Exit\")\n        print(\"=\"*50)\n        \n        choice = int(input(\"Enter choice: \"))\n        \n        if choice == 1:\n            book_id = input(\"Book ID: \")\n            title = input(\"Title: \")\n            author = input(\"Author: \")\n            isbn = input(\"ISBN (optional): \")\n            publisher = input(\"Publisher (optional): \")\n            add_book(book_id, title, author, isbn, publisher)\n            \n        elif choice == 2:\n            book_id = input(\"Book ID to remove: \")\n            remove_book(book_id)\n            \n        elif choice == 3:\n            username = input(\"Username: \")\n            password = input(\"Password: \")\n            email = input(\"Email: \")\n            phone = input(\"Phone (optional): \")\n            register_user(username, password, email, phone)\n            \n        elif choice == 4:\n            username = input(\"Username: \")\n            password = input(\"Password: \")\n            book_id = input(\"Book ID: \")\n            borrow_book(username, password, book_id)\n            \n        elif choice == 5:\n            username = input(\"Username: \")\n            book_id = input(\"Book ID: \")\n            days_late = int(input(\"Days late (0 if on time): \"))\n            return_book(username, book_id, days_late)\n            \n        elif choice == 6:\n            query = input(\"Search query: \")\n            search_type = input(\"Search by (title/author/isbn): \")\n            search_books(query, search_type)\n            \n        elif choice == 7:\n            filter_choice = input(\"Show only available? (y/n): \")\n            filter_available = filter_choice.lower() == 'y'\n            sort_by = input(\"Sort by (title/author/popularity): \")\n            list_books(filter_available, sort_by)\n            \n        elif choice == 8:\n            username = input(\"Username: \")\n            get_user_borrowed_books(username)\n            \n        elif choice == 9:\n            generate_report()\n            \n        elif choice == 10:\n            print(\"Thank you for using Library Management System\")\n            break\n\nmain()\n",
+  "code_stats": {
+    "total_imports": 4,
+    "external_libraries": [
+      "os",
+      "datetime",
+      "pickle",
+      "random"
+    ],
+    "total_functions": 19,
+    "function_names": [
+      "backup_library",
+      "process_reservations",
+      "get_user_borrowed_books",
+      "remove_book",
+      "register_user",
+      "load_config",
+      "authenticate_user",
+      "calculate_fine",
+      "admin_reset_password",
+      "update_book_condition",
+      "add_book",
+      "generate_report",
+      "return_book",
+      "bulk_add_books",
+      "reserve_book",
+      "main",
+      "search_books",
+      "borrow_book",
+      "list_books"
+    ],
+    "total_classes": 0,
+    "class_names": [],
+    "total_methods": 0,
+    "method_names": [],
+    "function_call_summary": {
+      "add_book": [
+        "print",
+        "append",
+        "len",
+        "now"
+      ],
+      "remove_book": [
+        "print",
+        "remove"
+      ],
+      "register_user": [
+        "print",
+        "len"
+      ],
+      "authenticate_user": [
+        "print"
+      ],
+      "borrow_book": [
+        "print",
+        "append",
+        "len"
+      ],
+      "return_book": [
+        "print",
+        "calculate_fine",
+        "remove",
+        "len"
+      ],
+      "search_books": [
+        "print",
+        "lower",
+        "append",
+        "len"
+      ],
+      "list_books": [
+        "print",
+        "len",
+        "sorted"
+      ],
+      "get_user_borrowed_books": [
+        "print",
+        "len"
+      ],
+      "calculate_fine": [
+        "print"
+      ],
+      "reserve_book": [
+        "print",
+        "append",
+        "len",
+        "now"
+      ],
+      "load_config": [
+        "eval",
+        "open",
+        "read",
+        "print"
+      ],
+      "backup_library": [
+        "dump",
+        "print",
+        "len",
+        "open",
+        "now"
+      ],
+      "generate_report": [
+        "print",
+        "len"
+      ],
+      "update_book_condition": [
+        "print"
+      ],
+      "bulk_add_books": [
+        "print",
+        "len",
+        "add_book"
+      ],
+      "admin_reset_password": [
+        "print",
+        "len"
+      ],
+      "process_reservations": [
+        "print"
+      ],
+      "main": [
+        "search_books",
+        "borrow_book",
+        "int",
+        "print",
+        "add_book",
+        "get_user_borrowed_books",
+        "generate_report",
+        "remove_book",
+        "register_user",
+        "list_books"
+      ]
+    },
+    "import_details": [
+      "import random",
+      "import os",
+      "import datetime",
+      "import pickle"
+    ],
+    "special_classes": {},
+    "init_methods": []
+  },
+  "code_structure": {
+    "function_calls": {
+      "add_book": [
+        "print",
+        "append",
+        "len",
+        "now"
+      ],
+      "remove_book": [
+        "print",
+        "remove"
+      ],
+      "register_user": [
+        "print",
+        "len"
+      ],
+      "authenticate_user": [
+        "print"
+      ],
+      "borrow_book": [
+        "print",
+        "append",
+        "len"
+      ],
+      "return_book": [
+        "print",
+        "calculate_fine",
+        "remove",
+        "len"
+      ],
+      "search_books": [
+        "print",
+        "lower",
+        "append",
+        "len"
+      ],
+      "list_books": [
+        "print",
+        "len",
+        "sorted"
+      ],
+      "get_user_borrowed_books": [
+        "print",
+        "len"
+      ],
+      "calculate_fine": [
+        "print"
+      ],
+      "reserve_book": [
+        "print",
+        "append",
+        "len",
+        "now"
+      ],
+      "load_config": [
+        "eval",
+        "open",
+        "read",
+        "print"
+      ],
+      "backup_library": [
+        "dump",
+        "print",
+        "len",
+        "open",
+        "now"
+      ],
+      "generate_report": [
+        "print",
+        "len"
+      ],
+      "update_book_condition": [
+        "print"
+      ],
+      "bulk_add_books": [
+        "print",
+        "len",
+        "add_book"
+      ],
+      "admin_reset_password": [
+        "print",
+        "len"
+      ],
+      "process_reservations": [
+        "print"
+      ],
+      "main": [
+        "search_books",
+        "borrow_book",
+        "int",
+        "print",
+        "add_book",
+        "get_user_borrowed_books",
+        "generate_report",
+        "remove_book",
+        "register_user",
+        "list_books"
+      ]
+    },
+    "called_by": {
+      "append": [
+        "search_books",
+        "add_book",
+        "borrow_book",
+        "reserve_book"
+      ],
+      "print": [
+        "backup_library",
+        "process_reservations",
+        "get_user_borrowed_books",
+        "remove_book",
+        "register_user",
+        "load_config",
+        "authenticate_user",
+        "calculate_fine",
+        "admin_reset_password",
+        "update_book_condition"
+      ],
+      "now": [
+        "reserve_book",
+        "add_book",
+        "backup_library"
+      ],
+      "len": [
+        "search_books",
+        "backup_library",
+        "borrow_book",
+        "add_book",
+        "generate_report",
+        "get_user_borrowed_books",
+        "bulk_add_books",
+        "register_user",
+        "list_books",
+        "return_book"
+      ],
+      "remove": [
+        "return_book",
+        "remove_book"
+      ],
+      "calculate_fine": [
+        "return_book"
+      ],
+      "lower": [
+        "search_books",
+        "main"
+      ],
+      "sorted": [
+        "list_books"
+      ],
+      "open": [
+        "backup_library",
+        "load_config"
+      ],
+      "read": [
+        "load_config"
+      ],
+      "eval": [
+        "load_config"
+      ],
+      "dump": [
+        "backup_library"
+      ],
+      "add_book": [
+        "bulk_add_books",
+        "main"
+      ],
+      "int": [
+        "main"
+      ],
+      "input": [
+        "main"
+      ],
+      "remove_book": [
+        "main"
+      ],
+      "register_user": [
+        "main"
+      ],
+      "borrow_book": [
+        "main"
+      ],
+      "return_book": [
+        "main"
+      ],
+      "search_books": [
+        "main"
+      ],
+      "list_books": [
+        "main"
+      ],
+      "get_user_borrowed_books": [
+        "main"
+      ],
+      "generate_report": [
+        "main"
+      ]
+    },
+    "imports": [
+      "os",
+      "datetime",
+      "pickle",
+      "random"
+    ],
+    "external_libs": [
+      "os",
+      "datetime",
+      "pickle",
+      "random"
+    ],
+    "all_functions": [
+      "backup_library",
+      "process_reservations",
+      "get_user_borrowed_books",
+      "remove_book",
+      "register_user",
+      "load_config",
+      "authenticate_user",
+      "calculate_fine",
+      "admin_reset_password",
+      "update_book_condition",
+      "add_book",
+      "generate_report",
+      "return_book",
+      "bulk_add_books",
+      "reserve_book",
+      "main",
+      "search_books",
+      "borrow_book",
+      "list_books"
+    ],
+    "all_classes": [],
+    "decorators": {},
+    "type_hints": {
+      "add_book": {},
+      "remove_book": {},
+      "register_user": {},
+      "authenticate_user": {},
+      "borrow_book": {},
+      "return_book": {},
+      "search_books": {},
+      "list_books": {},
+      "get_user_borrowed_books": {},
+      "calculate_fine": {},
+      "reserve_book": {},
+      "load_config": {},
+      "backup_library": {},
+      "generate_report": {},
+      "update_book_condition": {},
+      "bulk_add_books": {},
+      "admin_reset_password": {},
+      "process_reservations": {},
+      "main": {}
+    },
+    "special_classes": {},
+    "nested_functions": {},
+    "init_methods": []
+  },
+  "version": "enhanced_v4",
+  "config": {
+    "chunk_size_max": 2500,
+    "function_split_threshold": 2500,
+    "metadata_boost_weights": {
+      "exact_match": 2.8,
+      "name": 2.2,
+      "keywords": 1.5,
+      "chunk_type": 0.8,
+      "function_calls": 1.0,
+      "docstring_match": 1.2,
+      "type_hint_match": 1.1,
+      "decorator_match": 0.9
+    },
+    "hybrid_search_enabled": true,
+    "adaptive_hybrid_ratio": true,
+    "ast_based_chunking": true
+  }
+}

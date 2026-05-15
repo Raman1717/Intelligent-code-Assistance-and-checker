@@ -1,0 +1,1817 @@
+{
+  "metadata": [
+    {
+      "chunk_id": 0,
+      "content": "import random\nimport os\nimport datetime\n    import pickle",
+      "chunk_type": "imports",
+      "name": "imports",
+      "line_start": 2,
+      "line_count": 4,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 1,
+      "content": "def add_car(car_id, make, model, year, category, plate_number,\n            fuel_type=\"petrol\", seats=5, daily_rate=50.0, mileage=0):\n    car_data = {\n        \"id\": car_id,\n        \"make\": make,\n        \"model\": model,\n        \"year\": year,\n        \"category\": category,\n        \"plate_number\": plate_number,\n        \"fuel_type\": fuel_type,\n        \"seats\": seats,\n        \"daily_rate\": daily_rate,\n        \"mileage\": mileage,\n        \"available\": True,\n        \"condition\": \"good\",\n        \"rental_count\": 0,\n        \"date_added\": datetime.datetime.now(),\n        \"last_serviced\": datetime.datetime.now(),\n        \"insurance_valid_until\": datetime.datetime.now() + datetime.timedelta(days=365)\n    }\n\n    for car in fleet:\n        if car[\"plate_number\"] == plate_number:\n            print(\"Error: A car with this plate number already exists\")\n            print(f\"Plate Number: {plate_number}\")\n            return False\n\n    if category not in CAR_CATEGORIES:\n        print(f\"Warning: Category '{category}' is not a standard category\")\n        print(f\"Standard categories are: {', '.join(CAR_CATEGORIES)}\")\n\n    fleet.append(car_data)\n    active_rentals[car_id] = None\n    damage_reports[car_id] = []\n\n    print(\"Car added to fleet successfully\")\n    print(f\"Make & Model: {make} {model} ({year})\")\n    print(f\"Car ID: {car_id}\")\n    print(f\"Plate Number: {plate_number}\")\n    print(f\"Category: {category}\")\n    print(f\"Daily Rate: ${daily_rate:.2f}\")\n\n    if len(fleet) > 50:\n        print(\"Notice: Fleet is getting large, consider fleet management review\")\n\n    return True",
+      "chunk_type": "function",
+      "name": "add_car",
+      "line_start": 19,
+      "line_count": 46,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "len",
+        "timedelta",
+        "print",
+        "now",
+        "join",
+        "append"
+      ],
+      "called_by": [
+        "bulk_add_cars",
+        "main"
+      ],
+      "related_functions": [
+        "timedelta",
+        "join",
+        "bulk_add_cars",
+        "main",
+        "print",
+        "len",
+        "now",
+        "append"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 2,
+      "content": "def remove_car(car_id):\n    found = False\n\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            if not car[\"available\"]:\n                print(\"Error: Cannot remove a car that is currently rented\")\n                print(f\"Car {car_id} is currently on an active rental\")\n                return False\n\n            fleet.remove(car)\n            found = True\n            print(\"Car removed from fleet\")\n            print(f\"Removed: {car['make']} {car['model']} ({car['year']})\")\n\n            for reservation in reservation_queue:\n                if reservation[\"car_id\"] == car_id:\n                    print(f\"Warning: {reservation['customer_id']} had a reservation for this car\")\n\n            if car_id in active_rentals:\n                del active_rentals[car_id]\n\n            break\n\n    if not found:\n        print(\"Car not found in fleet\")\n        print(f\"Car ID: {car_id} does not exist\")\n\n    return found",
+      "chunk_type": "function",
+      "name": "remove_car",
+      "line_start": 67,
+      "line_count": 29,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "remove"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "print",
+        "main",
+        "remove"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 3,
+      "content": "def register_customer(customer_id, full_name, email, phone,\n                      license_number, license_expiry, address=None):\n    if customer_id in customers:\n        print(f\"Error: Customer ID {customer_id} is already registered\")\n        return False\n\n    if not license_number:\n        print(\"Error: A valid driver's license number is required\")\n        return False\n\n    try:\n        expiry_date = datetime.datetime.strptime(license_expiry, \"%Y-%m-%d\")\n        if expiry_date < datetime.datetime.now():\n            print(\"Warning: Driver's license has expired\")\n            print(f\"License expired on: {license_expiry}\")\n    except ValueError:\n        print(\"Warning: Could not validate license expiry date format (use YYYY-MM-DD)\")\n\n    customers[customer_id] = {\n        \"full_name\": full_name,\n        \"email\": email,\n        \"phone\": phone,\n        \"license_number\": license_number,\n        \"license_expiry\": license_expiry,\n        \"address\": address,\n        \"registered_on\": datetime.datetime.now(),\n        \"total_rentals\": 0,\n        \"loyalty_points\": 0,\n        \"blacklisted\": False\n    }\n\n    late_fees[customer_id] = 0.0\n    payment_records[customer_id] = []\n\n    print(f\"Customer registered successfully\")\n    print(f\"Name: {full_name}\")\n    print(f\"Customer ID: {customer_id}\")\n    print(f\"Email: {email}\")\n    print(f\"Phone: {phone}\")\n    print(f\"License Number: {license_number}\")\n\n    if address:\n        print(f\"Address: {address}\")\n\n    total_customers = len(customers)\n    print(f\"Total registered customers: {total_customers}\")\n\n    if total_customers > 100:\n        print(\"Milestone: Over 100 customers registered!\")\n\n    return True",
+      "chunk_type": "function",
+      "name": "register_customer",
+      "line_start": 98,
+      "line_count": 51,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "len",
+        "now",
+        "strptime"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "main",
+        "print",
+        "len",
+        "now",
+        "strptime"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 4,
+      "content": "def authenticate_customer(customer_id, license_number):\n    if customer_id not in customers:\n        print(\"Customer not found\")\n        print(f\"Customer ID: {customer_id} is not registered\")\n        return False\n\n    customer = customers[customer_id]\n\n    if customer[\"blacklisted\"]:\n        print(\"Access denied: This customer account has been blacklisted\")\n        print(\"Please contact the rental office for more information\")\n        return False\n\n    if customer[\"license_number\"] == license_number:\n        print(f\"Authentication successful for {customer['full_name']}\")\n        return True\n    else:\n        print(\"Authentication failed: Invalid license number\")\n        return False",
+      "chunk_type": "function",
+      "name": "authenticate_customer",
+      "line_start": 151,
+      "line_count": 19,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print"
+      ],
+      "called_by": [
+        "rent_car"
+      ],
+      "related_functions": [
+        "print",
+        "rent_car"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 5,
+      "content": "def rent_car(customer_id, license_number, car_id, rental_days):\n    if customer_id not in customers:\n        print(\"Error: Customer not found\")\n        return False\n\n    if not authenticate_customer(customer_id, license_number):\n        print(\"Rental denied: Authentication failed\")\n        return False\n\n    customer = customers[customer_id]\n\n    current_rentals = [r for r in reservation_queue\n                       if r.get(\"customer_id\") == customer_id and r.get(\"status\") == \"active\"]\n\n    if len(current_rentals) >= MAX_RENTAL_LIMIT:\n        print(f\"Rental limit reached. Maximum {MAX_RENTAL_LIMIT} cars can be rented at once\")\n        return False\n\n    if late_fees[customer_id] > 0:\n        print(f\"Warning: Customer has outstanding fees of ${late_fees[customer_id]:.2f}\")\n        print(\"Please clear outstanding balance before renting\")\n        return False\n\n    if rental_days <= 0:\n        print(\"Error: Rental duration must be at least 1 day\")\n        return False\n\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            if not car[\"available\"]:\n                print(\"Car is not available for rental\")\n                print(\"Would you like to make a reservation for when it becomes available?\")\n                return False\n\n            if car[\"condition\"] == \"damaged\":\n                print(\"Error: This car is currently marked as damaged and not available for rental\")\n                return False\n\n            total_cost = car[\"daily_rate\"] * rental_days\n            due_date = datetime.datetime.now() + datetime.timedelta(days=rental_days)\n\n            car[\"available\"] = False\n            car[\"rental_count\"] += 1\n            customer[\"total_rentals\"] += 1\n            customer[\"loyalty_points\"] += rental_days * 10\n\n            rental_record = {\n                \"customer_id\": customer_id,\n                \"car_id\": car_id,\n                \"start_date\": datetime.datetime.now(),\n                \"due_date\": due_date,\n                \"rental_days\": rental_days,\n                \"total_cost\": total_cost,\n                \"status\": \"active\",\n                \"paid\": False\n            }\n\n            reservation_queue.append(rental_record)\n            active_rentals[car_id] = customer_id\n\n            payment_records[customer_id].append({\n                \"type\": \"rental_charge\",\n                \"amount\": total_cost,\n                \"date\": datetime.datetime.now(),\n                \"car_id\": car_id\n            })",
+      "chunk_type": "function",
+      "name": "rent_car_part0",
+      "line_start": 172,
+      "line_count": 67,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [
+        "authenticate_customer",
+        "strftime",
+        "len",
+        "get",
+        "timedelta",
+        "main",
+        "print",
+        "now",
+        "append"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": "rent_car"
+    },
+    {
+      "chunk_id": 6,
+      "content": "\"car_id\": car_id\n            })\n\n            print(\"Car rented successfully!\")\n            print(f\"Car: {car['make']} {car['model']} ({car['year']})\")\n            print(f\"Plate: {car['plate_number']}\")\n            print(f\"Customer: {customer['full_name']}\")\n            print(f\"Rental Duration: {rental_days} days\")\n            print(f\"Daily Rate: ${car['daily_rate']:.2f}\")\n            print(f\"Total Cost: ${total_cost:.2f}\")\n            print(f\"Due Date: {due_date.strftime('%Y-%m-%d')}\")\n            print(f\"Loyalty Points Earned: {rental_days * 10}\")\n\n            return True\n\n    print(\"Car not found in fleet\")\n    print(f\"Car ID: {car_id} does not exist\")\n    return False",
+      "chunk_type": "function",
+      "name": "rent_car_part1",
+      "line_start": 236,
+      "line_count": 18,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [
+        "authenticate_customer",
+        "strftime",
+        "len",
+        "get",
+        "timedelta",
+        "main",
+        "print",
+        "now",
+        "append"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": "rent_car"
+    },
+    {
+      "chunk_id": 7,
+      "content": "print(\"Car not found in fleet\")\n    print(f\"Car ID: {car_id} does not exist\")\n    return False",
+      "chunk_type": "function",
+      "name": "rent_car_part2",
+      "line_start": 251,
+      "line_count": 3,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [
+        "authenticate_customer",
+        "strftime",
+        "len",
+        "get",
+        "timedelta",
+        "main",
+        "print",
+        "now",
+        "append"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": "rent_car"
+    },
+    {
+      "chunk_id": 8,
+      "content": "return False",
+      "chunk_type": "function",
+      "name": "rent_car_part3",
+      "line_start": 253,
+      "line_count": 1,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [
+        "authenticate_customer",
+        "strftime",
+        "len",
+        "get",
+        "timedelta",
+        "main",
+        "print",
+        "now",
+        "append"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": "rent_car"
+    },
+    {
+      "chunk_id": 9,
+      "content": "def return_car(customer_id, car_id, days_late=0, damage_noted=False, damage_description=\"\"):\n    if customer_id not in customers:\n        print(\"Error: Customer not found\")\n        return False\n\n    car_found = False\n\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            car_found = True\n            car[\"available\"] = True\n            active_rentals[car_id] = None\n\n            rental_record = None\n            for record in reservation_queue:\n                if record.get(\"car_id\") == car_id and record.get(\"customer_id\") == customer_id \\\n                        and record.get(\"status\") == \"active\":\n                    rental_record = record\n                    record[\"status\"] = \"completed\"\n                    record[\"return_date\"] = datetime.datetime.now()\n                    break\n\n            print(\"Car returned successfully!\")\n            print(f\"Car: {car['make']} {car['model']} ({car['year']})\")\n            print(f\"Plate: {car['plate_number']}\")\n\n            if damage_noted:\n                damage_entry = {\n                    \"car_id\": car_id,\n                    \"reported_by\": customer_id,\n                    \"description\": damage_description,\n                    \"date\": datetime.datetime.now()\n                }\n                damage_reports[car_id].append(damage_entry)\n                car[\"condition\"] = \"damaged\"\n                print(f\"Damage reported: {damage_description}\")\n                print(\"Car has been flagged for inspection before next rental\")\n\n                damage_fee = calculate_damage_fee(damage_description)\n                late_fees[customer_id] += damage_fee\n                print(f\"Damage fee applied: ${damage_fee:.2f}\")\n\n            if days_late > 0:\n                fine = calculate_late_fee(customer_id, car_id, days_late)\n                late_fees[customer_id] += fine\n                print(f\"Late return fee: ${fine:.2f}\")\n                print(f\"Total outstanding fees: ${late_fees[customer_id]:.2f}\")\n            else:\n                print(\"Returned on time. No late fees charged.\")\n\n            if rental_record:\n                print(f\"Rental Duration: {rental_record['rental_days']} days\")\n                print(f\"Original Charge: ${rental_record['total_cost']:.2f}\")\n\n            remaining = [r for r in reservation_queue\n                         if r.get(\"car_id\") == car_id and r.get(\"status\") == \"reserved\"]\n            if remaining:\n                print(f\"This car has {len(remaining)} pending reservation(s)\")",
+      "chunk_type": "function",
+      "name": "return_car_part0",
+      "line_start": 256,
+      "line_count": 59,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [
+        "now",
+        "main",
+        "calculate_damage_fee",
+        "print",
+        "get",
+        "len",
+        "calculate_late_fee",
+        "append"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": "return_car"
+    },
+    {
+      "chunk_id": 10,
+      "content": "if remaining:\n                print(f\"This car has {len(remaining)} pending reservation(s)\")\n\n            return True\n\n    if not car_found:\n        print(\"Car not found in fleet\")\n        print(f\"Car ID: {car_id} does not exist\")\n\n    return False",
+      "chunk_type": "function",
+      "name": "return_car_part1",
+      "line_start": 312,
+      "line_count": 10,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [
+        "now",
+        "main",
+        "calculate_damage_fee",
+        "print",
+        "get",
+        "len",
+        "calculate_late_fee",
+        "append"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": "return_car"
+    },
+    {
+      "chunk_id": 11,
+      "content": "print(f\"Car ID: {car_id} does not exist\")\n\n    return False",
+      "chunk_type": "function",
+      "name": "return_car_part2",
+      "line_start": 319,
+      "line_count": 3,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [
+        "now",
+        "main",
+        "calculate_damage_fee",
+        "print",
+        "get",
+        "len",
+        "calculate_late_fee",
+        "append"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": "return_car"
+    },
+    {
+      "chunk_id": 12,
+      "content": "return False",
+      "chunk_type": "function",
+      "name": "return_car_part3",
+      "line_start": 321,
+      "line_count": 1,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [
+        "now",
+        "main",
+        "calculate_damage_fee",
+        "print",
+        "get",
+        "len",
+        "calculate_late_fee",
+        "append"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": "return_car"
+    },
+    {
+      "chunk_id": 13,
+      "content": "def calculate_late_fee(customer_id, car_id, days_overdue):\n    fee_per_day = 25.0\n    base_fee = 10.0\n    max_fee = 500.0\n\n    total_fee = base_fee + (days_overdue * fee_per_day)\n\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            if car[\"category\"] == \"luxury\":\n                total_fee = total_fee * 1.5\n                print(\"Luxury vehicle surcharge applied to late fee\")\n            elif car[\"category\"] == \"economy\":\n                total_fee = total_fee * 0.8\n            break\n\n    if days_overdue > 7:\n        print(\"Severely overdue! Management has been notified\")\n        total_fee = total_fee * 1.25\n\n    if days_overdue > 14:\n        print(\"Car may be considered unreturned. Legal action may be initiated\")\n\n    if total_fee > max_fee:\n        total_fee = max_fee\n        print(f\"Late fee capped at maximum: ${max_fee:.2f}\")\n\n    return round(total_fee, 2)",
+      "chunk_type": "function",
+      "name": "calculate_late_fee",
+      "line_start": 324,
+      "line_count": 28,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "round"
+      ],
+      "called_by": [
+        "return_car"
+      ],
+      "related_functions": [
+        "return_car",
+        "print",
+        "round"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 14,
+      "content": "def calculate_damage_fee(damage_description):\n    description_lower = damage_description.lower()\n\n    if \"scratch\" in description_lower or \"minor\" in description_lower:\n        return 150.0\n    elif \"dent\" in description_lower or \"bump\" in description_lower:\n        return 400.0\n    elif \"window\" in description_lower or \"glass\" in description_lower:\n        return 300.0\n    elif \"total\" in description_lower or \"severe\" in description_lower:\n        return 2000.0\n    else:\n        return 200.0",
+      "chunk_type": "function",
+      "name": "calculate_damage_fee",
+      "line_start": 354,
+      "line_count": 13,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "lower"
+      ],
+      "called_by": [
+        "return_car"
+      ],
+      "related_functions": [
+        "return_car",
+        "lower"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 15,
+      "content": "def make_reservation(customer_id, car_id, reservation_date, rental_days):\n    if customer_id not in customers:\n        print(\"Error: Customer not found\")\n        return False\n\n    if customers[customer_id][\"blacklisted\"]:\n        print(\"Error: Blacklisted customers cannot make reservations\")\n        return False\n\n    car_exists = False\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            car_exists = True\n            if car[\"available\"]:\n                print(\"Note: This car is currently available. Consider renting directly.\")\n\n            reservation = {\n                \"customer_id\": customer_id,\n                \"car_id\": car_id,\n                \"reservation_date\": reservation_date,\n                \"rental_days\": rental_days,\n                \"created_on\": datetime.datetime.now(),\n                \"status\": \"reserved\",\n                \"notified\": False\n            }\n\n            reservation_queue.append(reservation)\n\n            print(f\"Reservation made successfully\")\n            print(f\"Customer: {customers[customer_id]['full_name']}\")\n            print(f\"Car: {car['make']} {car['model']} ({car['year']})\")\n            print(f\"Reservation Date: {reservation_date}\")\n            print(f\"Rental Duration: {rental_days} days\")\n            print(f\"Estimated Cost: ${car['daily_rate'] * rental_days:.2f}\")\n\n            queue_position = sum(1 for r in reservation_queue\n                                 if r.get(\"car_id\") == car_id and r.get(\"status\") == \"reserved\")\n            print(f\"Queue Position: {queue_position}\")\n\n            return True\n\n    if not car_exists:\n        print(\"Car not found in fleet\")\n        print(f\"Car ID: {car_id} does not exist\")\n\n    return False",
+      "chunk_type": "function",
+      "name": "make_reservation",
+      "line_start": 369,
+      "line_count": 46,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "sum",
+        "get",
+        "print",
+        "now",
+        "append"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "main",
+        "sum",
+        "print",
+        "get",
+        "now",
+        "append"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 16,
+      "content": "def search_cars(query, search_type=\"make\"):\n    results = []\n    query_lower = query.lower()\n\n    for car in fleet:\n        if search_type == \"make\":\n            if query_lower in car[\"make\"].lower():\n                results.append(car)\n        elif search_type == \"model\":\n            if query_lower in car[\"model\"].lower():\n                results.append(car)\n        elif search_type == \"category\":\n            if query_lower in car[\"category\"].lower():\n                results.append(car)\n        elif search_type == \"plate\":\n            if query_lower in car[\"plate_number\"].lower():\n                results.append(car)\n        elif search_type == \"fuel\":\n            if query_lower in car[\"fuel_type\"].lower():\n                results.append(car)\n        else:\n            if query_lower in car[\"make\"].lower() or query_lower in car[\"model\"].lower():\n                results.append(car)\n\n    print(f\"\\nFound {len(results)} result(s) for '{query}' in {search_type}\")\n\n    for car in results:\n        print(f\"\\nCar ID: {car['id']}\")\n        print(f\"Make & Model: {car['make']} {car['model']} ({car['year']})\")\n        print(f\"Category: {car['category']}\")\n        print(f\"Plate: {car['plate_number']}\")\n        print(f\"Daily Rate: ${car['daily_rate']:.2f}\")\n        print(f\"Available: {car['available']}\")\n        print(f\"Condition: {car['condition']}\")\n        print(f\"Fuel Type: {car['fuel_type']}\")\n        print(f\"Seats: {car['seats']}\")\n\n    if len(results) == 0:\n        print(\"No cars found matching your search criteria\")\n        return []\n\n    return results",
+      "chunk_type": "function",
+      "name": "search_cars",
+      "line_start": 417,
+      "line_count": 42,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "len",
+        "append",
+        "lower"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "main",
+        "lower",
+        "print",
+        "len",
+        "append"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 17,
+      "content": "def list_cars(filter_available=False, sort_by=\"make\", category=None):\n    if len(fleet) == 0:\n        print(\"Fleet is empty. No cars to display.\")\n        return\n\n    cars_to_show = fleet\n\n    if filter_available:\n        cars_to_show = [car for car in fleet if car[\"available\"]]\n        print(f\"Showing only available cars\")\n\n    if category:\n        cars_to_show = [car for car in cars_to_show if car[\"category\"] == category]\n        print(f\"Filtering by category: {category}\")\n\n    if sort_by == \"make\":\n        cars_to_show = sorted(cars_to_show, key=lambda x: x[\"make\"])\n    elif sort_by == \"model\":\n        cars_to_show = sorted(cars_to_show, key=lambda x: x[\"model\"])\n    elif sort_by == \"year\":\n        cars_to_show = sorted(cars_to_show, key=lambda x: x[\"year\"], reverse=True)\n    elif sort_by == \"rate\":\n        cars_to_show = sorted(cars_to_show, key=lambda x: x[\"daily_rate\"])\n    elif sort_by == \"popularity\":\n        cars_to_show = sorted(cars_to_show, key=lambda x: x[\"rental_count\"], reverse=True)\n    elif sort_by == \"mileage\":\n        cars_to_show = sorted(cars_to_show, key=lambda x: x[\"mileage\"])\n\n    print(f\"\\nListing {len(cars_to_show)} car(s):\")\n    print(\"-\" * 60)\n\n    for car in cars_to_show:\n        print(f\"Car ID      : {car['id']}\")\n        print(f\"Make/Model  : {car['make']} {car['model']} ({car['year']})\")\n        print(f\"Plate       : {car['plate_number']}\")\n        print(f\"Category    : {car['category']}\")\n        print(f\"Fuel Type   : {car['fuel_type']}\")\n        print(f\"Seats       : {car['seats']}\")\n        print(f\"Daily Rate  : ${car['daily_rate']:.2f}\")\n        print(f\"Mileage     : {car['mileage']:,} km\")\n        print(f\"Condition   : {car['condition']}\")\n        print(f\"Available   : {car['available']}\")\n        print(f\"Times Rented: {car['rental_count']}\")\n        print(\"-\" * 60)",
+      "chunk_type": "function",
+      "name": "list_cars",
+      "line_start": 461,
+      "line_count": 44,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "len",
+        "sorted"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "print",
+        "len",
+        "sorted",
+        "main"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 18,
+      "content": "def get_customer_rentals(customer_id):\n    if customer_id not in customers:\n        print(\"Customer not found\")\n        return []\n\n    customer = customers[customer_id]\n    customer_rentals = [r for r in reservation_queue if r.get(\"customer_id\") == customer_id]\n\n    print(f\"\\nRental History for {customer['full_name']}:\")\n    print(f\"Total Rentals: {customer['total_rentals']}\")\n    print(f\"Loyalty Points: {customer['loyalty_points']}\")\n    print(f\"Outstanding Fees: ${late_fees[customer_id]:.2f}\")\n    print(\"-\" * 40)\n\n    if len(customer_rentals) == 0:\n        print(\"No rental records found\")\n        return []\n\n    for record in customer_rentals:\n        car_name = \"Unknown Car\"\n        for car in fleet:\n            if car[\"id\"] == record.get(\"car_id\"):\n                car_name = f\"{car['make']} {car['model']} ({car['year']})\"\n                break\n\n        print(f\"\\nCar: {car_name}\")\n        print(f\"Status: {record.get('status', 'N/A')}\")\n        print(f\"Start Date: {record.get('start_date', 'N/A')}\")\n        print(f\"Due Date: {record.get('due_date', 'N/A')}\")\n        print(f\"Rental Days: {record.get('rental_days', 'N/A')}\")\n        print(f\"Total Cost: ${record.get('total_cost', 0):.2f}\")\n\n    return customer_rentals",
+      "chunk_type": "function",
+      "name": "get_customer_rentals",
+      "line_start": 507,
+      "line_count": 33,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "len",
+        "get"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "print",
+        "len",
+        "get",
+        "main"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 19,
+      "content": "def pay_outstanding_fees(customer_id, amount):\n    if customer_id not in customers:\n        print(\"Customer not found\")\n        return False\n\n    outstanding = late_fees[customer_id]\n\n    if outstanding <= 0:\n        print(\"No outstanding fees for this customer\")\n        return True\n\n    if amount <= 0:\n        print(\"Error: Payment amount must be greater than zero\")\n        return False\n\n    if amount > outstanding:\n        print(f\"Note: Payment of ${amount:.2f} exceeds outstanding fee of ${outstanding:.2f}\")\n        refund = amount - outstanding\n        print(f\"Refund due: ${refund:.2f}\")\n        late_fees[customer_id] = 0.0\n    else:\n        late_fees[customer_id] -= amount\n\n    payment_records[customer_id].append({\n        \"type\": \"fee_payment\",\n        \"amount\": amount,\n        \"date\": datetime.datetime.now()\n    })\n\n    print(f\"Payment of ${amount:.2f} processed for {customers[customer_id]['full_name']}\")\n    print(f\"Remaining Balance: ${late_fees[customer_id]:.2f}\")\n\n    if late_fees[customer_id] == 0:\n        print(\"Account is now clear of all outstanding fees!\")\n\n    return True",
+      "chunk_type": "function",
+      "name": "pay_outstanding_fees",
+      "line_start": 542,
+      "line_count": 36,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "now",
+        "append"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "print",
+        "now",
+        "main",
+        "append"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 20,
+      "content": "def update_car_condition(car_id, condition, notes=\"\"):\n    valid_conditions = [\"excellent\", \"good\", \"fair\", \"poor\", \"damaged\", \"under_maintenance\"]\n\n    if condition not in valid_conditions:\n        print(f\"Invalid condition. Valid options: {', '.join(valid_conditions)}\")\n        return False\n\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            old_condition = car[\"condition\"]\n            car[\"condition\"] = condition\n\n            print(f\"Car condition updated\")\n            print(f\"Car: {car['make']} {car['model']} ({car['year']})\")\n            print(f\"Plate: {car['plate_number']}\")\n            print(f\"Previous Condition: {old_condition}\")\n            print(f\"New Condition: {condition}\")\n\n            if notes:\n                print(f\"Notes: {notes}\")\n\n            if condition in [\"damaged\", \"under_maintenance\"]:\n                if car[\"available\"]:\n                    car[\"available\"] = False\n                    print(\"Car has been automatically marked as unavailable\")\n                print(\"Car removed from active rental pool until repaired\")\n\n            if condition == \"excellent\":\n                car[\"available\"] = True\n                print(\"Car is now available for rental\")\n\n            return True\n\n    print(\"Car not found in fleet\")\n    return False",
+      "chunk_type": "function",
+      "name": "update_car_condition",
+      "line_start": 580,
+      "line_count": 35,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "join"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "print",
+        "main",
+        "join"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 21,
+      "content": "def blacklist_customer(customer_id, reason):\n    if customer_id not in customers:\n        print(\"Customer not found\")\n        return False\n\n    customers[customer_id][\"blacklisted\"] = True\n\n    print(f\"Customer {customer_id} has been blacklisted\")\n    print(f\"Name: {customers[customer_id]['full_name']}\")\n    print(f\"Reason: {reason}\")\n    print(\"This customer will no longer be able to rent or reserve cars\")\n\n    return True",
+      "chunk_type": "function",
+      "name": "blacklist_customer",
+      "line_start": 617,
+      "line_count": 13,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "print",
+        "main"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 22,
+      "content": "def unblacklist_customer(customer_id):\n    if customer_id not in customers:\n        print(\"Customer not found\")\n        return False\n\n    if not customers[customer_id][\"blacklisted\"]:\n        print(\"Customer is not blacklisted\")\n        return False\n\n    customers[customer_id][\"blacklisted\"] = False\n    print(f\"Customer {customer_id} has been removed from the blacklist\")\n    print(f\"Name: {customers[customer_id]['full_name']}\")\n    print(\"Customer can now rent and reserve cars again\")\n\n    return True",
+      "chunk_type": "function",
+      "name": "unblacklist_customer",
+      "line_start": 632,
+      "line_count": 15,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print"
+      ],
+      "called_by": [],
+      "related_functions": [
+        "print"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 23,
+      "content": "def process_reservations():\n    processed = 0\n    notified = 0\n\n    print(\"\\nProcessing reservation queue...\")\n\n    for reservation in reservation_queue:\n        if reservation.get(\"status\") != \"reserved\":\n            continue\n\n        car_id = reservation[\"car_id\"]\n        customer_id = reservation[\"customer_id\"]\n\n        for car in fleet:\n            if car[\"id\"] == car_id:\n                if car[\"available\"] and not reservation[\"notified\"]:\n                    customer_name = customers.get(customer_id, {}).get(\"full_name\", \"Unknown\")\n                    print(f\"Notifying {customer_name}: {car['make']} {car['model']} is now available\")\n                    reservation[\"notified\"] = True\n                    notified += 1\n\n        processed += 1\n\n    print(f\"Processed {processed} reservation(s)\")\n    print(f\"Sent {notified} notification(s)\")\n    return processed",
+      "chunk_type": "function",
+      "name": "process_reservations",
+      "line_start": 649,
+      "line_count": 26,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "get"
+      ],
+      "called_by": [],
+      "related_functions": [
+        "print",
+        "get"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 24,
+      "content": "def service_car(car_id, service_type, cost, notes=\"\"):\n    valid_service_types = [\"oil_change\", \"tire_rotation\", \"full_service\",\n                           \"brake_service\", \"engine_repair\", \"bodywork\", \"inspection\"]\n\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            if not car[\"available\"]:\n                print(\"Warning: Car is currently rented out\")\n                print(\"Schedule service after it is returned\")\n\n            old_condition = car[\"condition\"]\n            car[\"condition\"] = \"good\" if service_type != \"bodywork\" else car[\"condition\"]\n            car[\"last_serviced\"] = datetime.datetime.now()\n\n            if service_type not in valid_service_types:\n                print(f\"Warning: '{service_type}' is not a recognized service type\")\n\n            print(f\"Service recorded for car {car_id}\")\n            print(f\"Car: {car['make']} {car['model']} ({car['year']})\")\n            print(f\"Service Type: {service_type}\")\n            print(f\"Cost: ${cost:.2f}\")\n            print(f\"Date: {datetime.datetime.now().strftime('%Y-%m-%d')}\")\n            print(f\"Condition Before: {old_condition}\")\n            print(f\"Condition After: {car['condition']}\")\n\n            if notes:\n                print(f\"Notes: {notes}\")\n\n            return True\n\n    print(\"Car not found in fleet\")\n    return False",
+      "chunk_type": "function",
+      "name": "service_car",
+      "line_start": 677,
+      "line_count": 32,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "now",
+        "strftime"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "print",
+        "now",
+        "strftime",
+        "main"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 25,
+      "content": "def bulk_add_cars(car_list):\n    success_count = 0\n    fail_count = 0\n\n    for car_data in car_list:\n        try:\n            result = add_car(\n                car_data[0], car_data[1], car_data[2],\n                car_data[3], car_data[4], car_data[5]\n            )\n            if result:\n                success_count += 1\n            else:\n                fail_count += 1\n        except Exception as e:\n            fail_count += 1\n            print(f\"Failed to add car {car_data}: {e}\")\n\n    print(f\"\\n{success_count} car(s) added successfully\")\n\n    if fail_count > 0:\n        print(f\"{fail_count} car(s) failed to add\")\n\n    print(f\"Total fleet size: {len(fleet)}\")\n    return success_count",
+      "chunk_type": "function",
+      "name": "bulk_add_cars",
+      "line_start": 711,
+      "line_count": 25,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "add_car",
+        "print",
+        "len"
+      ],
+      "called_by": [],
+      "related_functions": [
+        "add_car",
+        "print",
+        "len"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 26,
+      "content": "def load_config(filename):\n    global rental_config\n\n    try:\n        with open(filename, 'r') as f:\n            config_str = f.read()\n            rental_config = eval(config_str)\n\n            print(\"Configuration loaded successfully\")\n            print(f\"Config file: {filename}\")\n\n            if \"max_rental_limit\" in rental_config:\n                global MAX_RENTAL_LIMIT\n                MAX_RENTAL_LIMIT = rental_config[\"max_rental_limit\"]\n                print(f\"Rental limit set to: {MAX_RENTAL_LIMIT}\")\n\n            if \"default_daily_rate\" in rental_config:\n                print(f\"Default daily rate: ${rental_config['default_daily_rate']:.2f}\")\n\n    except FileNotFoundError:\n        print(f\"Config file not found: {filename}\")\n    except Exception as e:\n        print(f\"Error loading configuration: {e}\")",
+      "chunk_type": "function",
+      "name": "load_config",
+      "line_start": 738,
+      "line_count": 23,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "eval",
+        "print",
+        "read",
+        "open"
+      ],
+      "called_by": [],
+      "related_functions": [
+        "eval",
+        "print",
+        "read",
+        "open"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 27,
+      "content": "def backup_data(filename=\"/tmp/car_rental_backup.pkl\"):\n    import pickle\n\n    backup_data_dict = {\n        \"fleet\": fleet,\n        \"customers\": customers,\n        \"active_rentals\": active_rentals,\n        \"reservation_queue\": reservation_queue,\n        \"late_fees\": late_fees,\n        \"damage_reports\": damage_reports,\n        \"payment_records\": payment_records,\n        \"backup_date\": datetime.datetime.now()\n    }\n\n    with open(filename, 'wb') as f:\n        pickle.dump(backup_data_dict, f)\n\n    print(f\"Backup created: {filename}\")\n    print(f\"Total cars backed up: {len(fleet)}\")\n    print(f\"Total customers backed up: {len(customers)}\")\n    print(f\"Total rental records: {len(reservation_queue)}\")",
+      "chunk_type": "function",
+      "name": "backup_data",
+      "line_start": 763,
+      "line_count": 21,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "len",
+        "dump",
+        "open",
+        "print",
+        "now"
+      ],
+      "called_by": [],
+      "related_functions": [
+        "now",
+        "open",
+        "print",
+        "len",
+        "dump"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 28,
+      "content": "def generate_report():\n    if len(fleet) == 0:\n        print(\"No data available for report. Fleet is empty.\")\n        return None\n\n    total_cars = len(fleet)\n    available_cars = sum(1 for car in fleet if car[\"available\"])\n    rented_cars = total_cars - available_cars\n    damaged_cars = sum(1 for car in fleet if car[\"condition\"] in [\"damaged\", \"under_maintenance\"])\n\n    availability_rate = (available_cars / total_cars) * 100 if total_cars > 0 else 0\n\n    total_outstanding_fees = sum(late_fees.values())\n    total_loyalty_points = sum(c.get(\"loyalty_points\", 0) for c in customers.values())\n\n    active_rental_count = sum(1 for r in reservation_queue if r.get(\"status\") == \"active\")\n    completed_rental_count = sum(1 for r in reservation_queue if r.get(\"status\") == \"completed\")\n\n    category_counts = {}\n    for car in fleet:\n        cat = car[\"category\"]\n        category_counts[cat] = category_counts.get(cat, 0) + 1\n\n    most_rented = sorted(fleet, key=lambda x: x[\"rental_count\"], reverse=True)\n\n    print(\"\\n\" + \"=\" * 60)\n    print(\"       CAR RENTAL SYSTEM - MANAGEMENT REPORT\")\n    print(\"=\" * 60)\n    print(f\"Report Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\")\n    print(\"-\" * 60)\n    print(\"FLEET OVERVIEW\")\n    print(f\"  Total Cars in Fleet    : {total_cars}\")\n    print(f\"  Available Cars         : {available_cars}\")\n    print(f\"  Currently Rented       : {rented_cars}\")\n    print(f\"  Damaged / In Service   : {damaged_cars}\")\n    print(f\"  Fleet Availability Rate: {availability_rate:.2f}%\")\n    print(\"-\" * 60)\n    print(\"CUSTOMER OVERVIEW\")\n    print(f\"  Total Registered       : {len(customers)}\")\n    blacklisted = sum(1 for c in customers.values() if c.get(\"blacklisted\"))\n    print(f\"  Blacklisted Customers  : {blacklisted}\")\n    print(f\"  Total Loyalty Points   : {total_loyalty_points:,}\")\n    print(\"-\" * 60)\n    print(\"RENTAL ACTIVITY\")\n    print(f\"  Active Rentals         : {active_rental_count}\")\n    print(f\"  Completed Rentals      : {completed_rental_count}\")\n    print(f\"  Pending Reservations   : {len([r for r in reservation_queue if r.get('status') == 'reserved'])}\")\n    print(\"-\" * 60)\n    print(\"FINANCIALS\")\n    print(f\"  Total Outstanding Fees : ${total_outstanding_fees:.2f}\")\n    print(\"-\" * 60)\n    print(\"FLEET BY CATEGORY\")\n    for cat, count in sorted(category_counts.items()):\n        print(f\"  {cat.capitalize():<20}: {count} car(s)\")",
+      "chunk_type": "function",
+      "name": "generate_report_part0",
+      "line_start": 786,
+      "line_count": 54,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [
+        "now",
+        "sum",
+        "values",
+        "len",
+        "get",
+        "capitalize",
+        "items",
+        "main",
+        "sorted",
+        "print",
+        "strftime",
+        "enumerate"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": "generate_report"
+    },
+    {
+      "chunk_id": 29,
+      "content": "print(\"FLEET BY CATEGORY\")\n    for cat, count in sorted(category_counts.items()):\n        print(f\"  {cat.capitalize():<20}: {count} car(s)\")\n    print(\"-\" * 60)\n    print(\"TOP 3 MOST RENTED CARS\")\n    for i, car in enumerate(most_rented[:3], 1):\n        print(f\"  {i}. {car['make']} {car['model']} ({car['year']}) - {car['rental_count']} rental(s)\")\n    print(\"=\" * 60)\n\n    return True",
+      "chunk_type": "function",
+      "name": "generate_report_part1",
+      "line_start": 837,
+      "line_count": 10,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [
+        "now",
+        "sum",
+        "values",
+        "len",
+        "get",
+        "capitalize",
+        "items",
+        "main",
+        "sorted",
+        "print",
+        "strftime",
+        "enumerate"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": "generate_report"
+    },
+    {
+      "chunk_id": 30,
+      "content": "print(\"=\" * 60)\n\n    return True",
+      "chunk_type": "function",
+      "name": "generate_report_part2",
+      "line_start": 844,
+      "line_count": 3,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [
+        "now",
+        "sum",
+        "values",
+        "len",
+        "get",
+        "capitalize",
+        "items",
+        "main",
+        "sorted",
+        "print",
+        "strftime",
+        "enumerate"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": "generate_report"
+    },
+    {
+      "chunk_id": 31,
+      "content": "return True",
+      "chunk_type": "function",
+      "name": "generate_report_part3",
+      "line_start": 846,
+      "line_count": 1,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [
+        "now",
+        "sum",
+        "values",
+        "len",
+        "get",
+        "capitalize",
+        "items",
+        "main",
+        "sorted",
+        "print",
+        "strftime",
+        "enumerate"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": "generate_report"
+    },
+    {
+      "chunk_id": 32,
+      "content": "def admin_update_rate(car_id, new_rate):\n    if new_rate <= 0:\n        print(\"Error: Daily rate must be greater than zero\")\n        return False\n\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            old_rate = car[\"daily_rate\"]\n            car[\"daily_rate\"] = new_rate\n\n            print(f\"Daily rate updated for car {car_id}\")\n            print(f\"Car: {car['make']} {car['model']} ({car['year']})\")\n            print(f\"Old Rate: ${old_rate:.2f}\")\n            print(f\"New Rate: ${new_rate:.2f}\")\n\n            change = new_rate - old_rate\n            change_pct = (change / old_rate) * 100\n            direction = \"increase\" if change > 0 else \"decrease\"\n            print(f\"Rate {direction}: {abs(change_pct):.1f}%\")\n\n            return True\n\n    print(\"Car not found in fleet\")\n    return False",
+      "chunk_type": "function",
+      "name": "admin_update_rate",
+      "line_start": 849,
+      "line_count": 24,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "abs",
+        "print"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "abs",
+        "print",
+        "main"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 33,
+      "content": "def update_mileage(car_id, new_mileage):\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            if new_mileage < car[\"mileage\"]:\n                print(\"Error: New mileage cannot be less than current mileage\")\n                print(f\"Current mileage: {car['mileage']:,} km\")\n                return False\n\n            old_mileage = car[\"mileage\"]\n            added = new_mileage - old_mileage\n            car[\"mileage\"] = new_mileage\n\n            print(f\"Mileage updated for car {car_id}\")\n            print(f\"Car: {car['make']} {car['model']} ({car['year']})\")\n            print(f\"Previous Mileage: {old_mileage:,} km\")\n            print(f\"New Mileage     : {new_mileage:,} km\")\n            print(f\"Added           : {added:,} km\")\n\n            if new_mileage > 200000:\n                print(\"Warning: High mileage vehicle. Consider scheduling a full service\")\n\n            return True\n\n    print(\"Car not found in fleet\")\n    return False",
+      "chunk_type": "function",
+      "name": "update_mileage",
+      "line_start": 875,
+      "line_count": 25,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print"
+      ],
+      "called_by": [],
+      "related_functions": [
+        "print"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 34,
+      "content": "def get_damage_report(car_id):\n    if car_id not in damage_reports:\n        print(\"No damage records found for this car ID\")\n        return []\n\n    reports = damage_reports[car_id]\n\n    car_name = \"Unknown\"\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            car_name = f\"{car['make']} {car['model']} ({car['year']})\"\n            break\n\n    print(f\"\\nDamage Report for: {car_name}\")\n    print(f\"Total Incidents: {len(reports)}\")\n    print(\"-\" * 40)\n\n    if len(reports) == 0:\n        print(\"No damage incidents recorded\")\n        return []\n\n    for i, report in enumerate(reports, 1):\n        print(f\"\\nIncident #{i}\")\n        print(f\"Reported By: {report['reported_by']}\")\n        print(f\"Date       : {report['date'].strftime('%Y-%m-%d')}\")\n        print(f\"Description: {report['description']}\")\n\n    return reports",
+      "chunk_type": "function",
+      "name": "get_damage_report",
+      "line_start": 902,
+      "line_count": 28,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [
+        "print",
+        "len",
+        "enumerate",
+        "strftime"
+      ],
+      "called_by": [
+        "main"
+      ],
+      "related_functions": [
+        "main",
+        "strftime",
+        "print",
+        "len",
+        "enumerate"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": null
+    },
+    {
+      "chunk_id": 35,
+      "content": "def main():\n    while True:\n        print(\"\\n\" + \"=\" * 55)\n        print(\"         CAR RENTAL MANAGEMENT SYSTEM\")\n        print(\"=\" * 55)\n        print(\"1.  Add Car to Fleet\")\n        print(\"2.  Remove Car from Fleet\")\n        print(\"3.  Register Customer\")\n        print(\"4.  Rent a Car\")\n        print(\"5.  Return a Car\")\n        print(\"6.  Search Cars\")\n        print(\"7.  List All Cars\")\n        print(\"8.  View Customer Rentals\")\n        print(\"9.  Make a Reservation\")\n        print(\"10. Pay Outstanding Fees\")\n        print(\"11. Update Car Condition\")\n        print(\"12. Service a Car\")\n        print(\"13. Generate Report\")\n        print(\"14. View Damage Reports\")\n        print(\"15. Update Car Daily Rate\")\n        print(\"16. Blacklist Customer\")\n        print(\"17. Exit\")\n        print(\"=\" * 55)\n\n        try:\n            choice = int(input(\"Enter your choice: \"))\n        except ValueError:\n            print(\"Invalid input. Please enter a number.\")\n            continue\n\n        if choice == 1:\n            car_id = input(\"Car ID: \")\n            make = input(\"Make (e.g. Toyota): \")\n            model = input(\"Model (e.g. Corolla): \")\n            year = int(input(\"Year: \"))\n            category = input(f\"Category ({'/'.join(CAR_CATEGORIES)}): \")\n            plate = input(\"Plate Number: \")\n            fuel = input(f\"Fuel Type ({'/'.join(FUEL_TYPES)}): \")\n            seats = int(input(\"Number of Seats: \"))\n            rate = float(input(\"Daily Rate ($): \"))\n            mileage = int(input(\"Current Mileage (km): \"))\n            add_car(car_id, make, model, year, category, plate, fuel, seats, rate, mileage)\n\n        elif choice == 2:\n            car_id = input(\"Car ID to Remove: \")\n            remove_car(car_id)\n\n        elif choice == 3:\n            cid = input(\"Customer ID: \")\n            name = input(\"Full Name: \")\n            email = input(\"Email: \")\n            phone = input(\"Phone: \")\n            license_num = input(\"Driver's License Number: \")\n            license_exp = input(\"License Expiry (YYYY-MM-DD): \")\n            address = input(\"Address (optional): \")\n            register_customer(cid, name, email, phone, license_num, license_exp, address)\n\n        elif choice == 4:\n            cid = input(\"Customer ID: \")\n            lic = input(\"License Number: \")\n            car_id = input(\"Car ID: \")\n            days = int(input(\"Rental Duration (days): \"))\n            rent_car(cid, lic, car_id, days)",
+      "chunk_type": "function",
+      "name": "main_part0",
+      "line_start": 936,
+      "line_count": 64,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [
+        "remove_car",
+        "generate_report",
+        "pay_outstanding_fees",
+        "get_customer_rentals",
+        "get_damage_report",
+        "return_car",
+        "update_car_condition",
+        "int",
+        "input",
+        "make_reservation",
+        "join",
+        "blacklist_customer",
+        "lower",
+        "admin_update_rate",
+        "service_car",
+        "float",
+        "search_cars",
+        "list_cars",
+        "register_customer",
+        "rent_car",
+        "add_car",
+        "print"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": "main"
+    },
+    {
+      "chunk_id": 36,
+      "content": "days = int(input(\"Rental Duration (days): \"))\n            rent_car(cid, lic, car_id, days)\n\n        elif choice == 5:\n            cid = input(\"Customer ID: \")\n            car_id = input(\"Car ID: \")\n            late = int(input(\"Days Late (0 if on time): \"))\n            dmg = input(\"Any damage to report? (y/n): \").lower() == 'y'\n            desc = \"\"\n            if dmg:\n                desc = input(\"Describe the damage: \")\n            return_car(cid, car_id, late, dmg, desc)\n\n        elif choice == 6:\n            query = input(\"Search Query: \")\n            search_type = input(\"Search By (make/model/category/plate/fuel): \")\n            search_cars(query, search_type)\n\n        elif choice == 7:\n            filter_choice = input(\"Show only available cars? (y/n): \").lower() == 'y'\n            sort_by = input(\"Sort By (make/model/year/rate/popularity/mileage): \")\n            cat_filter = input(\"Filter by category (leave blank for all): \")\n            list_cars(filter_choice, sort_by, cat_filter if cat_filter else None)\n\n        elif choice == 8:\n            cid = input(\"Customer ID: \")\n            get_customer_rentals(cid)\n\n        elif choice == 9:\n            cid = input(\"Customer ID: \")\n            car_id = input(\"Car ID: \")\n            res_date = input(\"Reservation Date (YYYY-MM-DD): \")\n            days = int(input(\"Intended Rental Days: \"))\n            make_reservation(cid, car_id, res_date, days)\n\n        elif choice == 10:\n            cid = input(\"Customer ID: \")\n            amount = float(input(\"Payment Amount ($): \"))\n            pay_outstanding_fees(cid, amount)\n\n        elif choice == 11:\n            car_id = input(\"Car ID: \")\n            condition = input(\"New Condition (excellent/good/fair/poor/damaged/under_maintenance): \")\n            notes = input(\"Notes (optional): \")\n            update_car_condition(car_id, condition, notes)\n\n        elif choice == 12:\n            car_id = input(\"Car ID: \")\n            stype = input(\"Service Type (oil_change/tire_rotation/full_service/etc.): \")\n            cost = float(input(\"Service Cost ($): \"))\n            notes = input(\"Notes (optional): \")\n            service_car(car_id, stype, cost, notes)\n\n        elif choice == 13:\n            generate_report()\n\n        elif choice == 14:\n            car_id = input(\"Car ID: \")\n            get_damage_report(car_id)",
+      "chunk_type": "function",
+      "name": "main_part1",
+      "line_start": 997,
+      "line_count": 60,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [
+        "remove_car",
+        "generate_report",
+        "pay_outstanding_fees",
+        "get_customer_rentals",
+        "get_damage_report",
+        "return_car",
+        "update_car_condition",
+        "int",
+        "input",
+        "make_reservation",
+        "join",
+        "blacklist_customer",
+        "lower",
+        "admin_update_rate",
+        "service_car",
+        "float",
+        "search_cars",
+        "list_cars",
+        "register_customer",
+        "rent_car",
+        "add_car",
+        "print"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": "main"
+    },
+    {
+      "chunk_id": 37,
+      "content": "car_id = input(\"Car ID: \")\n            get_damage_report(car_id)\n\n        elif choice == 15:\n            car_id = input(\"Car ID: \")\n            new_rate = float(input(\"New Daily Rate ($): \"))\n            admin_update_rate(car_id, new_rate)\n\n        elif choice == 16:\n            cid = input(\"Customer ID: \")\n            reason = input(\"Reason for Blacklisting: \")\n            blacklist_customer(cid, reason)\n\n        elif choice == 17:\n            print(\"Thank you for using the Car Rental Management System. Goodbye!\")\n            break\n\n        else:\n            print(\"Invalid choice. Please select a number between 1 and 17.\")",
+      "chunk_type": "function",
+      "name": "main_part2",
+      "line_start": 1054,
+      "line_count": 19,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [
+        "remove_car",
+        "generate_report",
+        "pay_outstanding_fees",
+        "get_customer_rentals",
+        "get_damage_report",
+        "return_car",
+        "update_car_condition",
+        "int",
+        "input",
+        "make_reservation",
+        "join",
+        "blacklist_customer",
+        "lower",
+        "admin_update_rate",
+        "service_car",
+        "float",
+        "search_cars",
+        "list_cars",
+        "register_customer",
+        "rent_car",
+        "add_car",
+        "print"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": "main"
+    },
+    {
+      "chunk_id": 38,
+      "content": "else:\n            print(\"Invalid choice. Please select a number between 1 and 17.\")",
+      "chunk_type": "function",
+      "name": "main_part3",
+      "line_start": 1070,
+      "line_count": 3,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [
+        "remove_car",
+        "generate_report",
+        "pay_outstanding_fees",
+        "get_customer_rentals",
+        "get_damage_report",
+        "return_car",
+        "update_car_condition",
+        "int",
+        "input",
+        "make_reservation",
+        "join",
+        "blacklist_customer",
+        "lower",
+        "admin_update_rate",
+        "service_car",
+        "float",
+        "search_cars",
+        "list_cars",
+        "register_customer",
+        "rent_car",
+        "add_car",
+        "print"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": "main"
+    },
+    {
+      "chunk_id": 39,
+      "content": "print(\"Invalid choice. Please select a number between 1 and 17.\")",
+      "chunk_type": "function",
+      "name": "main_part4",
+      "line_start": 1072,
+      "line_count": 1,
+      "source": "check.py",
+      "docstring": null,
+      "calls": [],
+      "called_by": [],
+      "related_functions": [
+        "remove_car",
+        "generate_report",
+        "pay_outstanding_fees",
+        "get_customer_rentals",
+        "get_damage_report",
+        "return_car",
+        "update_car_condition",
+        "int",
+        "input",
+        "make_reservation",
+        "join",
+        "blacklist_customer",
+        "lower",
+        "admin_update_rate",
+        "service_car",
+        "float",
+        "search_cars",
+        "list_cars",
+        "register_customer",
+        "rent_car",
+        "add_car",
+        "print"
+      ],
+      "decorators": [],
+      "type_hints": {},
+      "special_type": null,
+      "parent_class": null,
+      "parent_function": "main"
+    }
+  ],
+  "original_code": "# Car Rental System\n\nimport random\nimport os\nimport datetime\n\nfleet = []\ncustomers = {}\nactive_rentals = {}\nreservation_queue = []\nrental_config = None\nMAX_RENTAL_LIMIT = 3\nlate_fees = {}\ndamage_reports = {}\npayment_records = {}\n\nCAR_CATEGORIES = [\"economy\", \"compact\", \"midsize\", \"fullsize\", \"suv\", \"luxury\", \"van\"]\nFUEL_TYPES = [\"petrol\", \"diesel\", \"electric\", \"hybrid\"]\n\ndef add_car(car_id, make, model, year, category, plate_number,\n            fuel_type=\"petrol\", seats=5, daily_rate=50.0, mileage=0):\n    car_data = {\n        \"id\": car_id,\n        \"make\": make,\n        \"model\": model,\n        \"year\": year,\n        \"category\": category,\n        \"plate_number\": plate_number,\n        \"fuel_type\": fuel_type,\n        \"seats\": seats,\n        \"daily_rate\": daily_rate,\n        \"mileage\": mileage,\n        \"available\": True,\n        \"condition\": \"good\",\n        \"rental_count\": 0,\n        \"date_added\": datetime.datetime.now(),\n        \"last_serviced\": datetime.datetime.now(),\n        \"insurance_valid_until\": datetime.datetime.now() + datetime.timedelta(days=365)\n    }\n\n    for car in fleet:\n        if car[\"plate_number\"] == plate_number:\n            print(\"Error: A car with this plate number already exists\")\n            print(f\"Plate Number: {plate_number}\")\n            return False\n\n    if category not in CAR_CATEGORIES:\n        print(f\"Warning: Category '{category}' is not a standard category\")\n        print(f\"Standard categories are: {', '.join(CAR_CATEGORIES)}\")\n\n    fleet.append(car_data)\n    active_rentals[car_id] = None\n    damage_reports[car_id] = []\n\n    print(\"Car added to fleet successfully\")\n    print(f\"Make & Model: {make} {model} ({year})\")\n    print(f\"Car ID: {car_id}\")\n    print(f\"Plate Number: {plate_number}\")\n    print(f\"Category: {category}\")\n    print(f\"Daily Rate: ${daily_rate:.2f}\")\n\n    if len(fleet) > 50:\n        print(\"Notice: Fleet is getting large, consider fleet management review\")\n\n    return True\n\n\ndef remove_car(car_id):\n    found = False\n\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            if not car[\"available\"]:\n                print(\"Error: Cannot remove a car that is currently rented\")\n                print(f\"Car {car_id} is currently on an active rental\")\n                return False\n\n            fleet.remove(car)\n            found = True\n            print(\"Car removed from fleet\")\n            print(f\"Removed: {car['make']} {car['model']} ({car['year']})\")\n\n            for reservation in reservation_queue:\n                if reservation[\"car_id\"] == car_id:\n                    print(f\"Warning: {reservation['customer_id']} had a reservation for this car\")\n\n            if car_id in active_rentals:\n                del active_rentals[car_id]\n\n            break\n\n    if not found:\n        print(\"Car not found in fleet\")\n        print(f\"Car ID: {car_id} does not exist\")\n\n    return found\n\n\ndef register_customer(customer_id, full_name, email, phone,\n                      license_number, license_expiry, address=None):\n    if customer_id in customers:\n        print(f\"Error: Customer ID {customer_id} is already registered\")\n        return False\n\n    if not license_number:\n        print(\"Error: A valid driver's license number is required\")\n        return False\n\n    try:\n        expiry_date = datetime.datetime.strptime(license_expiry, \"%Y-%m-%d\")\n        if expiry_date < datetime.datetime.now():\n            print(\"Warning: Driver's license has expired\")\n            print(f\"License expired on: {license_expiry}\")\n    except ValueError:\n        print(\"Warning: Could not validate license expiry date format (use YYYY-MM-DD)\")\n\n    customers[customer_id] = {\n        \"full_name\": full_name,\n        \"email\": email,\n        \"phone\": phone,\n        \"license_number\": license_number,\n        \"license_expiry\": license_expiry,\n        \"address\": address,\n        \"registered_on\": datetime.datetime.now(),\n        \"total_rentals\": 0,\n        \"loyalty_points\": 0,\n        \"blacklisted\": False\n    }\n\n    late_fees[customer_id] = 0.0\n    payment_records[customer_id] = []\n\n    print(f\"Customer registered successfully\")\n    print(f\"Name: {full_name}\")\n    print(f\"Customer ID: {customer_id}\")\n    print(f\"Email: {email}\")\n    print(f\"Phone: {phone}\")\n    print(f\"License Number: {license_number}\")\n\n    if address:\n        print(f\"Address: {address}\")\n\n    total_customers = len(customers)\n    print(f\"Total registered customers: {total_customers}\")\n\n    if total_customers > 100:\n        print(\"Milestone: Over 100 customers registered!\")\n\n    return True\n\n\ndef authenticate_customer(customer_id, license_number):\n    if customer_id not in customers:\n        print(\"Customer not found\")\n        print(f\"Customer ID: {customer_id} is not registered\")\n        return False\n\n    customer = customers[customer_id]\n\n    if customer[\"blacklisted\"]:\n        print(\"Access denied: This customer account has been blacklisted\")\n        print(\"Please contact the rental office for more information\")\n        return False\n\n    if customer[\"license_number\"] == license_number:\n        print(f\"Authentication successful for {customer['full_name']}\")\n        return True\n    else:\n        print(\"Authentication failed: Invalid license number\")\n        return False\n\n\ndef rent_car(customer_id, license_number, car_id, rental_days):\n    if customer_id not in customers:\n        print(\"Error: Customer not found\")\n        return False\n\n    if not authenticate_customer(customer_id, license_number):\n        print(\"Rental denied: Authentication failed\")\n        return False\n\n    customer = customers[customer_id]\n\n    current_rentals = [r for r in reservation_queue\n                       if r.get(\"customer_id\") == customer_id and r.get(\"status\") == \"active\"]\n\n    if len(current_rentals) >= MAX_RENTAL_LIMIT:\n        print(f\"Rental limit reached. Maximum {MAX_RENTAL_LIMIT} cars can be rented at once\")\n        return False\n\n    if late_fees[customer_id] > 0:\n        print(f\"Warning: Customer has outstanding fees of ${late_fees[customer_id]:.2f}\")\n        print(\"Please clear outstanding balance before renting\")\n        return False\n\n    if rental_days <= 0:\n        print(\"Error: Rental duration must be at least 1 day\")\n        return False\n\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            if not car[\"available\"]:\n                print(\"Car is not available for rental\")\n                print(\"Would you like to make a reservation for when it becomes available?\")\n                return False\n\n            if car[\"condition\"] == \"damaged\":\n                print(\"Error: This car is currently marked as damaged and not available for rental\")\n                return False\n\n            total_cost = car[\"daily_rate\"] * rental_days\n            due_date = datetime.datetime.now() + datetime.timedelta(days=rental_days)\n\n            car[\"available\"] = False\n            car[\"rental_count\"] += 1\n            customer[\"total_rentals\"] += 1\n            customer[\"loyalty_points\"] += rental_days * 10\n\n            rental_record = {\n                \"customer_id\": customer_id,\n                \"car_id\": car_id,\n                \"start_date\": datetime.datetime.now(),\n                \"due_date\": due_date,\n                \"rental_days\": rental_days,\n                \"total_cost\": total_cost,\n                \"status\": \"active\",\n                \"paid\": False\n            }\n\n            reservation_queue.append(rental_record)\n            active_rentals[car_id] = customer_id\n\n            payment_records[customer_id].append({\n                \"type\": \"rental_charge\",\n                \"amount\": total_cost,\n                \"date\": datetime.datetime.now(),\n                \"car_id\": car_id\n            })\n\n            print(\"Car rented successfully!\")\n            print(f\"Car: {car['make']} {car['model']} ({car['year']})\")\n            print(f\"Plate: {car['plate_number']}\")\n            print(f\"Customer: {customer['full_name']}\")\n            print(f\"Rental Duration: {rental_days} days\")\n            print(f\"Daily Rate: ${car['daily_rate']:.2f}\")\n            print(f\"Total Cost: ${total_cost:.2f}\")\n            print(f\"Due Date: {due_date.strftime('%Y-%m-%d')}\")\n            print(f\"Loyalty Points Earned: {rental_days * 10}\")\n\n            return True\n\n    print(\"Car not found in fleet\")\n    print(f\"Car ID: {car_id} does not exist\")\n    return False\n\n\ndef return_car(customer_id, car_id, days_late=0, damage_noted=False, damage_description=\"\"):\n    if customer_id not in customers:\n        print(\"Error: Customer not found\")\n        return False\n\n    car_found = False\n\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            car_found = True\n            car[\"available\"] = True\n            active_rentals[car_id] = None\n\n            rental_record = None\n            for record in reservation_queue:\n                if record.get(\"car_id\") == car_id and record.get(\"customer_id\") == customer_id \\\n                        and record.get(\"status\") == \"active\":\n                    rental_record = record\n                    record[\"status\"] = \"completed\"\n                    record[\"return_date\"] = datetime.datetime.now()\n                    break\n\n            print(\"Car returned successfully!\")\n            print(f\"Car: {car['make']} {car['model']} ({car['year']})\")\n            print(f\"Plate: {car['plate_number']}\")\n\n            if damage_noted:\n                damage_entry = {\n                    \"car_id\": car_id,\n                    \"reported_by\": customer_id,\n                    \"description\": damage_description,\n                    \"date\": datetime.datetime.now()\n                }\n                damage_reports[car_id].append(damage_entry)\n                car[\"condition\"] = \"damaged\"\n                print(f\"Damage reported: {damage_description}\")\n                print(\"Car has been flagged for inspection before next rental\")\n\n                damage_fee = calculate_damage_fee(damage_description)\n                late_fees[customer_id] += damage_fee\n                print(f\"Damage fee applied: ${damage_fee:.2f}\")\n\n            if days_late > 0:\n                fine = calculate_late_fee(customer_id, car_id, days_late)\n                late_fees[customer_id] += fine\n                print(f\"Late return fee: ${fine:.2f}\")\n                print(f\"Total outstanding fees: ${late_fees[customer_id]:.2f}\")\n            else:\n                print(\"Returned on time. No late fees charged.\")\n\n            if rental_record:\n                print(f\"Rental Duration: {rental_record['rental_days']} days\")\n                print(f\"Original Charge: ${rental_record['total_cost']:.2f}\")\n\n            remaining = [r for r in reservation_queue\n                         if r.get(\"car_id\") == car_id and r.get(\"status\") == \"reserved\"]\n            if remaining:\n                print(f\"This car has {len(remaining)} pending reservation(s)\")\n\n            return True\n\n    if not car_found:\n        print(\"Car not found in fleet\")\n        print(f\"Car ID: {car_id} does not exist\")\n\n    return False\n\n\ndef calculate_late_fee(customer_id, car_id, days_overdue):\n    fee_per_day = 25.0\n    base_fee = 10.0\n    max_fee = 500.0\n\n    total_fee = base_fee + (days_overdue * fee_per_day)\n\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            if car[\"category\"] == \"luxury\":\n                total_fee = total_fee * 1.5\n                print(\"Luxury vehicle surcharge applied to late fee\")\n            elif car[\"category\"] == \"economy\":\n                total_fee = total_fee * 0.8\n            break\n\n    if days_overdue > 7:\n        print(\"Severely overdue! Management has been notified\")\n        total_fee = total_fee * 1.25\n\n    if days_overdue > 14:\n        print(\"Car may be considered unreturned. Legal action may be initiated\")\n\n    if total_fee > max_fee:\n        total_fee = max_fee\n        print(f\"Late fee capped at maximum: ${max_fee:.2f}\")\n\n    return round(total_fee, 2)\n\n\ndef calculate_damage_fee(damage_description):\n    description_lower = damage_description.lower()\n\n    if \"scratch\" in description_lower or \"minor\" in description_lower:\n        return 150.0\n    elif \"dent\" in description_lower or \"bump\" in description_lower:\n        return 400.0\n    elif \"window\" in description_lower or \"glass\" in description_lower:\n        return 300.0\n    elif \"total\" in description_lower or \"severe\" in description_lower:\n        return 2000.0\n    else:\n        return 200.0\n\n\ndef make_reservation(customer_id, car_id, reservation_date, rental_days):\n    if customer_id not in customers:\n        print(\"Error: Customer not found\")\n        return False\n\n    if customers[customer_id][\"blacklisted\"]:\n        print(\"Error: Blacklisted customers cannot make reservations\")\n        return False\n\n    car_exists = False\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            car_exists = True\n            if car[\"available\"]:\n                print(\"Note: This car is currently available. Consider renting directly.\")\n\n            reservation = {\n                \"customer_id\": customer_id,\n                \"car_id\": car_id,\n                \"reservation_date\": reservation_date,\n                \"rental_days\": rental_days,\n                \"created_on\": datetime.datetime.now(),\n                \"status\": \"reserved\",\n                \"notified\": False\n            }\n\n            reservation_queue.append(reservation)\n\n            print(f\"Reservation made successfully\")\n            print(f\"Customer: {customers[customer_id]['full_name']}\")\n            print(f\"Car: {car['make']} {car['model']} ({car['year']})\")\n            print(f\"Reservation Date: {reservation_date}\")\n            print(f\"Rental Duration: {rental_days} days\")\n            print(f\"Estimated Cost: ${car['daily_rate'] * rental_days:.2f}\")\n\n            queue_position = sum(1 for r in reservation_queue\n                                 if r.get(\"car_id\") == car_id and r.get(\"status\") == \"reserved\")\n            print(f\"Queue Position: {queue_position}\")\n\n            return True\n\n    if not car_exists:\n        print(\"Car not found in fleet\")\n        print(f\"Car ID: {car_id} does not exist\")\n\n    return False\n\n\ndef search_cars(query, search_type=\"make\"):\n    results = []\n    query_lower = query.lower()\n\n    for car in fleet:\n        if search_type == \"make\":\n            if query_lower in car[\"make\"].lower():\n                results.append(car)\n        elif search_type == \"model\":\n            if query_lower in car[\"model\"].lower():\n                results.append(car)\n        elif search_type == \"category\":\n            if query_lower in car[\"category\"].lower():\n                results.append(car)\n        elif search_type == \"plate\":\n            if query_lower in car[\"plate_number\"].lower():\n                results.append(car)\n        elif search_type == \"fuel\":\n            if query_lower in car[\"fuel_type\"].lower():\n                results.append(car)\n        else:\n            if query_lower in car[\"make\"].lower() or query_lower in car[\"model\"].lower():\n                results.append(car)\n\n    print(f\"\\nFound {len(results)} result(s) for '{query}' in {search_type}\")\n\n    for car in results:\n        print(f\"\\nCar ID: {car['id']}\")\n        print(f\"Make & Model: {car['make']} {car['model']} ({car['year']})\")\n        print(f\"Category: {car['category']}\")\n        print(f\"Plate: {car['plate_number']}\")\n        print(f\"Daily Rate: ${car['daily_rate']:.2f}\")\n        print(f\"Available: {car['available']}\")\n        print(f\"Condition: {car['condition']}\")\n        print(f\"Fuel Type: {car['fuel_type']}\")\n        print(f\"Seats: {car['seats']}\")\n\n    if len(results) == 0:\n        print(\"No cars found matching your search criteria\")\n        return []\n\n    return results\n\n\ndef list_cars(filter_available=False, sort_by=\"make\", category=None):\n    if len(fleet) == 0:\n        print(\"Fleet is empty. No cars to display.\")\n        return\n\n    cars_to_show = fleet\n\n    if filter_available:\n        cars_to_show = [car for car in fleet if car[\"available\"]]\n        print(f\"Showing only available cars\")\n\n    if category:\n        cars_to_show = [car for car in cars_to_show if car[\"category\"] == category]\n        print(f\"Filtering by category: {category}\")\n\n    if sort_by == \"make\":\n        cars_to_show = sorted(cars_to_show, key=lambda x: x[\"make\"])\n    elif sort_by == \"model\":\n        cars_to_show = sorted(cars_to_show, key=lambda x: x[\"model\"])\n    elif sort_by == \"year\":\n        cars_to_show = sorted(cars_to_show, key=lambda x: x[\"year\"], reverse=True)\n    elif sort_by == \"rate\":\n        cars_to_show = sorted(cars_to_show, key=lambda x: x[\"daily_rate\"])\n    elif sort_by == \"popularity\":\n        cars_to_show = sorted(cars_to_show, key=lambda x: x[\"rental_count\"], reverse=True)\n    elif sort_by == \"mileage\":\n        cars_to_show = sorted(cars_to_show, key=lambda x: x[\"mileage\"])\n\n    print(f\"\\nListing {len(cars_to_show)} car(s):\")\n    print(\"-\" * 60)\n\n    for car in cars_to_show:\n        print(f\"Car ID      : {car['id']}\")\n        print(f\"Make/Model  : {car['make']} {car['model']} ({car['year']})\")\n        print(f\"Plate       : {car['plate_number']}\")\n        print(f\"Category    : {car['category']}\")\n        print(f\"Fuel Type   : {car['fuel_type']}\")\n        print(f\"Seats       : {car['seats']}\")\n        print(f\"Daily Rate  : ${car['daily_rate']:.2f}\")\n        print(f\"Mileage     : {car['mileage']:,} km\")\n        print(f\"Condition   : {car['condition']}\")\n        print(f\"Available   : {car['available']}\")\n        print(f\"Times Rented: {car['rental_count']}\")\n        print(\"-\" * 60)\n\n\ndef get_customer_rentals(customer_id):\n    if customer_id not in customers:\n        print(\"Customer not found\")\n        return []\n\n    customer = customers[customer_id]\n    customer_rentals = [r for r in reservation_queue if r.get(\"customer_id\") == customer_id]\n\n    print(f\"\\nRental History for {customer['full_name']}:\")\n    print(f\"Total Rentals: {customer['total_rentals']}\")\n    print(f\"Loyalty Points: {customer['loyalty_points']}\")\n    print(f\"Outstanding Fees: ${late_fees[customer_id]:.2f}\")\n    print(\"-\" * 40)\n\n    if len(customer_rentals) == 0:\n        print(\"No rental records found\")\n        return []\n\n    for record in customer_rentals:\n        car_name = \"Unknown Car\"\n        for car in fleet:\n            if car[\"id\"] == record.get(\"car_id\"):\n                car_name = f\"{car['make']} {car['model']} ({car['year']})\"\n                break\n\n        print(f\"\\nCar: {car_name}\")\n        print(f\"Status: {record.get('status', 'N/A')}\")\n        print(f\"Start Date: {record.get('start_date', 'N/A')}\")\n        print(f\"Due Date: {record.get('due_date', 'N/A')}\")\n        print(f\"Rental Days: {record.get('rental_days', 'N/A')}\")\n        print(f\"Total Cost: ${record.get('total_cost', 0):.2f}\")\n\n    return customer_rentals\n\n\ndef pay_outstanding_fees(customer_id, amount):\n    if customer_id not in customers:\n        print(\"Customer not found\")\n        return False\n\n    outstanding = late_fees[customer_id]\n\n    if outstanding <= 0:\n        print(\"No outstanding fees for this customer\")\n        return True\n\n    if amount <= 0:\n        print(\"Error: Payment amount must be greater than zero\")\n        return False\n\n    if amount > outstanding:\n        print(f\"Note: Payment of ${amount:.2f} exceeds outstanding fee of ${outstanding:.2f}\")\n        refund = amount - outstanding\n        print(f\"Refund due: ${refund:.2f}\")\n        late_fees[customer_id] = 0.0\n    else:\n        late_fees[customer_id] -= amount\n\n    payment_records[customer_id].append({\n        \"type\": \"fee_payment\",\n        \"amount\": amount,\n        \"date\": datetime.datetime.now()\n    })\n\n    print(f\"Payment of ${amount:.2f} processed for {customers[customer_id]['full_name']}\")\n    print(f\"Remaining Balance: ${late_fees[customer_id]:.2f}\")\n\n    if late_fees[customer_id] == 0:\n        print(\"Account is now clear of all outstanding fees!\")\n\n    return True\n\n\ndef update_car_condition(car_id, condition, notes=\"\"):\n    valid_conditions = [\"excellent\", \"good\", \"fair\", \"poor\", \"damaged\", \"under_maintenance\"]\n\n    if condition not in valid_conditions:\n        print(f\"Invalid condition. Valid options: {', '.join(valid_conditions)}\")\n        return False\n\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            old_condition = car[\"condition\"]\n            car[\"condition\"] = condition\n\n            print(f\"Car condition updated\")\n            print(f\"Car: {car['make']} {car['model']} ({car['year']})\")\n            print(f\"Plate: {car['plate_number']}\")\n            print(f\"Previous Condition: {old_condition}\")\n            print(f\"New Condition: {condition}\")\n\n            if notes:\n                print(f\"Notes: {notes}\")\n\n            if condition in [\"damaged\", \"under_maintenance\"]:\n                if car[\"available\"]:\n                    car[\"available\"] = False\n                    print(\"Car has been automatically marked as unavailable\")\n                print(\"Car removed from active rental pool until repaired\")\n\n            if condition == \"excellent\":\n                car[\"available\"] = True\n                print(\"Car is now available for rental\")\n\n            return True\n\n    print(\"Car not found in fleet\")\n    return False\n\n\ndef blacklist_customer(customer_id, reason):\n    if customer_id not in customers:\n        print(\"Customer not found\")\n        return False\n\n    customers[customer_id][\"blacklisted\"] = True\n\n    print(f\"Customer {customer_id} has been blacklisted\")\n    print(f\"Name: {customers[customer_id]['full_name']}\")\n    print(f\"Reason: {reason}\")\n    print(\"This customer will no longer be able to rent or reserve cars\")\n\n    return True\n\n\ndef unblacklist_customer(customer_id):\n    if customer_id not in customers:\n        print(\"Customer not found\")\n        return False\n\n    if not customers[customer_id][\"blacklisted\"]:\n        print(\"Customer is not blacklisted\")\n        return False\n\n    customers[customer_id][\"blacklisted\"] = False\n    print(f\"Customer {customer_id} has been removed from the blacklist\")\n    print(f\"Name: {customers[customer_id]['full_name']}\")\n    print(\"Customer can now rent and reserve cars again\")\n\n    return True\n\n\ndef process_reservations():\n    processed = 0\n    notified = 0\n\n    print(\"\\nProcessing reservation queue...\")\n\n    for reservation in reservation_queue:\n        if reservation.get(\"status\") != \"reserved\":\n            continue\n\n        car_id = reservation[\"car_id\"]\n        customer_id = reservation[\"customer_id\"]\n\n        for car in fleet:\n            if car[\"id\"] == car_id:\n                if car[\"available\"] and not reservation[\"notified\"]:\n                    customer_name = customers.get(customer_id, {}).get(\"full_name\", \"Unknown\")\n                    print(f\"Notifying {customer_name}: {car['make']} {car['model']} is now available\")\n                    reservation[\"notified\"] = True\n                    notified += 1\n\n        processed += 1\n\n    print(f\"Processed {processed} reservation(s)\")\n    print(f\"Sent {notified} notification(s)\")\n    return processed\n\n\ndef service_car(car_id, service_type, cost, notes=\"\"):\n    valid_service_types = [\"oil_change\", \"tire_rotation\", \"full_service\",\n                           \"brake_service\", \"engine_repair\", \"bodywork\", \"inspection\"]\n\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            if not car[\"available\"]:\n                print(\"Warning: Car is currently rented out\")\n                print(\"Schedule service after it is returned\")\n\n            old_condition = car[\"condition\"]\n            car[\"condition\"] = \"good\" if service_type != \"bodywork\" else car[\"condition\"]\n            car[\"last_serviced\"] = datetime.datetime.now()\n\n            if service_type not in valid_service_types:\n                print(f\"Warning: '{service_type}' is not a recognized service type\")\n\n            print(f\"Service recorded for car {car_id}\")\n            print(f\"Car: {car['make']} {car['model']} ({car['year']})\")\n            print(f\"Service Type: {service_type}\")\n            print(f\"Cost: ${cost:.2f}\")\n            print(f\"Date: {datetime.datetime.now().strftime('%Y-%m-%d')}\")\n            print(f\"Condition Before: {old_condition}\")\n            print(f\"Condition After: {car['condition']}\")\n\n            if notes:\n                print(f\"Notes: {notes}\")\n\n            return True\n\n    print(\"Car not found in fleet\")\n    return False\n\n\ndef bulk_add_cars(car_list):\n    success_count = 0\n    fail_count = 0\n\n    for car_data in car_list:\n        try:\n            result = add_car(\n                car_data[0], car_data[1], car_data[2],\n                car_data[3], car_data[4], car_data[5]\n            )\n            if result:\n                success_count += 1\n            else:\n                fail_count += 1\n        except Exception as e:\n            fail_count += 1\n            print(f\"Failed to add car {car_data}: {e}\")\n\n    print(f\"\\n{success_count} car(s) added successfully\")\n\n    if fail_count > 0:\n        print(f\"{fail_count} car(s) failed to add\")\n\n    print(f\"Total fleet size: {len(fleet)}\")\n    return success_count\n\n\ndef load_config(filename):\n    global rental_config\n\n    try:\n        with open(filename, 'r') as f:\n            config_str = f.read()\n            rental_config = eval(config_str)\n\n            print(\"Configuration loaded successfully\")\n            print(f\"Config file: {filename}\")\n\n            if \"max_rental_limit\" in rental_config:\n                global MAX_RENTAL_LIMIT\n                MAX_RENTAL_LIMIT = rental_config[\"max_rental_limit\"]\n                print(f\"Rental limit set to: {MAX_RENTAL_LIMIT}\")\n\n            if \"default_daily_rate\" in rental_config:\n                print(f\"Default daily rate: ${rental_config['default_daily_rate']:.2f}\")\n\n    except FileNotFoundError:\n        print(f\"Config file not found: {filename}\")\n    except Exception as e:\n        print(f\"Error loading configuration: {e}\")\n\n\ndef backup_data(filename=\"/tmp/car_rental_backup.pkl\"):\n    import pickle\n\n    backup_data_dict = {\n        \"fleet\": fleet,\n        \"customers\": customers,\n        \"active_rentals\": active_rentals,\n        \"reservation_queue\": reservation_queue,\n        \"late_fees\": late_fees,\n        \"damage_reports\": damage_reports,\n        \"payment_records\": payment_records,\n        \"backup_date\": datetime.datetime.now()\n    }\n\n    with open(filename, 'wb') as f:\n        pickle.dump(backup_data_dict, f)\n\n    print(f\"Backup created: {filename}\")\n    print(f\"Total cars backed up: {len(fleet)}\")\n    print(f\"Total customers backed up: {len(customers)}\")\n    print(f\"Total rental records: {len(reservation_queue)}\")\n\n\ndef generate_report():\n    if len(fleet) == 0:\n        print(\"No data available for report. Fleet is empty.\")\n        return None\n\n    total_cars = len(fleet)\n    available_cars = sum(1 for car in fleet if car[\"available\"])\n    rented_cars = total_cars - available_cars\n    damaged_cars = sum(1 for car in fleet if car[\"condition\"] in [\"damaged\", \"under_maintenance\"])\n\n    availability_rate = (available_cars / total_cars) * 100 if total_cars > 0 else 0\n\n    total_outstanding_fees = sum(late_fees.values())\n    total_loyalty_points = sum(c.get(\"loyalty_points\", 0) for c in customers.values())\n\n    active_rental_count = sum(1 for r in reservation_queue if r.get(\"status\") == \"active\")\n    completed_rental_count = sum(1 for r in reservation_queue if r.get(\"status\") == \"completed\")\n\n    category_counts = {}\n    for car in fleet:\n        cat = car[\"category\"]\n        category_counts[cat] = category_counts.get(cat, 0) + 1\n\n    most_rented = sorted(fleet, key=lambda x: x[\"rental_count\"], reverse=True)\n\n    print(\"\\n\" + \"=\" * 60)\n    print(\"       CAR RENTAL SYSTEM - MANAGEMENT REPORT\")\n    print(\"=\" * 60)\n    print(f\"Report Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\")\n    print(\"-\" * 60)\n    print(\"FLEET OVERVIEW\")\n    print(f\"  Total Cars in Fleet    : {total_cars}\")\n    print(f\"  Available Cars         : {available_cars}\")\n    print(f\"  Currently Rented       : {rented_cars}\")\n    print(f\"  Damaged / In Service   : {damaged_cars}\")\n    print(f\"  Fleet Availability Rate: {availability_rate:.2f}%\")\n    print(\"-\" * 60)\n    print(\"CUSTOMER OVERVIEW\")\n    print(f\"  Total Registered       : {len(customers)}\")\n    blacklisted = sum(1 for c in customers.values() if c.get(\"blacklisted\"))\n    print(f\"  Blacklisted Customers  : {blacklisted}\")\n    print(f\"  Total Loyalty Points   : {total_loyalty_points:,}\")\n    print(\"-\" * 60)\n    print(\"RENTAL ACTIVITY\")\n    print(f\"  Active Rentals         : {active_rental_count}\")\n    print(f\"  Completed Rentals      : {completed_rental_count}\")\n    print(f\"  Pending Reservations   : {len([r for r in reservation_queue if r.get('status') == 'reserved'])}\")\n    print(\"-\" * 60)\n    print(\"FINANCIALS\")\n    print(f\"  Total Outstanding Fees : ${total_outstanding_fees:.2f}\")\n    print(\"-\" * 60)\n    print(\"FLEET BY CATEGORY\")\n    for cat, count in sorted(category_counts.items()):\n        print(f\"  {cat.capitalize():<20}: {count} car(s)\")\n    print(\"-\" * 60)\n    print(\"TOP 3 MOST RENTED CARS\")\n    for i, car in enumerate(most_rented[:3], 1):\n        print(f\"  {i}. {car['make']} {car['model']} ({car['year']}) - {car['rental_count']} rental(s)\")\n    print(\"=\" * 60)\n\n    return True\n\n\ndef admin_update_rate(car_id, new_rate):\n    if new_rate <= 0:\n        print(\"Error: Daily rate must be greater than zero\")\n        return False\n\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            old_rate = car[\"daily_rate\"]\n            car[\"daily_rate\"] = new_rate\n\n            print(f\"Daily rate updated for car {car_id}\")\n            print(f\"Car: {car['make']} {car['model']} ({car['year']})\")\n            print(f\"Old Rate: ${old_rate:.2f}\")\n            print(f\"New Rate: ${new_rate:.2f}\")\n\n            change = new_rate - old_rate\n            change_pct = (change / old_rate) * 100\n            direction = \"increase\" if change > 0 else \"decrease\"\n            print(f\"Rate {direction}: {abs(change_pct):.1f}%\")\n\n            return True\n\n    print(\"Car not found in fleet\")\n    return False\n\n\ndef update_mileage(car_id, new_mileage):\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            if new_mileage < car[\"mileage\"]:\n                print(\"Error: New mileage cannot be less than current mileage\")\n                print(f\"Current mileage: {car['mileage']:,} km\")\n                return False\n\n            old_mileage = car[\"mileage\"]\n            added = new_mileage - old_mileage\n            car[\"mileage\"] = new_mileage\n\n            print(f\"Mileage updated for car {car_id}\")\n            print(f\"Car: {car['make']} {car['model']} ({car['year']})\")\n            print(f\"Previous Mileage: {old_mileage:,} km\")\n            print(f\"New Mileage     : {new_mileage:,} km\")\n            print(f\"Added           : {added:,} km\")\n\n            if new_mileage > 200000:\n                print(\"Warning: High mileage vehicle. Consider scheduling a full service\")\n\n            return True\n\n    print(\"Car not found in fleet\")\n    return False\n\n\ndef get_damage_report(car_id):\n    if car_id not in damage_reports:\n        print(\"No damage records found for this car ID\")\n        return []\n\n    reports = damage_reports[car_id]\n\n    car_name = \"Unknown\"\n    for car in fleet:\n        if car[\"id\"] == car_id:\n            car_name = f\"{car['make']} {car['model']} ({car['year']})\"\n            break\n\n    print(f\"\\nDamage Report for: {car_name}\")\n    print(f\"Total Incidents: {len(reports)}\")\n    print(\"-\" * 40)\n\n    if len(reports) == 0:\n        print(\"No damage incidents recorded\")\n        return []\n\n    for i, report in enumerate(reports, 1):\n        print(f\"\\nIncident #{i}\")\n        print(f\"Reported By: {report['reported_by']}\")\n        print(f\"Date       : {report['date'].strftime('%Y-%m-%d')}\")\n        print(f\"Description: {report['description']}\")\n\n    return reports\n\n\nprint(\"Car Rental System Initialized\")\nrandom_seed = random.randint(1, 1000)\n\n\ndef main():\n    while True:\n        print(\"\\n\" + \"=\" * 55)\n        print(\"         CAR RENTAL MANAGEMENT SYSTEM\")\n        print(\"=\" * 55)\n        print(\"1.  Add Car to Fleet\")\n        print(\"2.  Remove Car from Fleet\")\n        print(\"3.  Register Customer\")\n        print(\"4.  Rent a Car\")\n        print(\"5.  Return a Car\")\n        print(\"6.  Search Cars\")\n        print(\"7.  List All Cars\")\n        print(\"8.  View Customer Rentals\")\n        print(\"9.  Make a Reservation\")\n        print(\"10. Pay Outstanding Fees\")\n        print(\"11. Update Car Condition\")\n        print(\"12. Service a Car\")\n        print(\"13. Generate Report\")\n        print(\"14. View Damage Reports\")\n        print(\"15. Update Car Daily Rate\")\n        print(\"16. Blacklist Customer\")\n        print(\"17. Exit\")\n        print(\"=\" * 55)\n\n        try:\n            choice = int(input(\"Enter your choice: \"))\n        except ValueError:\n            print(\"Invalid input. Please enter a number.\")\n            continue\n\n        if choice == 1:\n            car_id = input(\"Car ID: \")\n            make = input(\"Make (e.g. Toyota): \")\n            model = input(\"Model (e.g. Corolla): \")\n            year = int(input(\"Year: \"))\n            category = input(f\"Category ({'/'.join(CAR_CATEGORIES)}): \")\n            plate = input(\"Plate Number: \")\n            fuel = input(f\"Fuel Type ({'/'.join(FUEL_TYPES)}): \")\n            seats = int(input(\"Number of Seats: \"))\n            rate = float(input(\"Daily Rate ($): \"))\n            mileage = int(input(\"Current Mileage (km): \"))\n            add_car(car_id, make, model, year, category, plate, fuel, seats, rate, mileage)\n\n        elif choice == 2:\n            car_id = input(\"Car ID to Remove: \")\n            remove_car(car_id)\n\n        elif choice == 3:\n            cid = input(\"Customer ID: \")\n            name = input(\"Full Name: \")\n            email = input(\"Email: \")\n            phone = input(\"Phone: \")\n            license_num = input(\"Driver's License Number: \")\n            license_exp = input(\"License Expiry (YYYY-MM-DD): \")\n            address = input(\"Address (optional): \")\n            register_customer(cid, name, email, phone, license_num, license_exp, address)\n\n        elif choice == 4:\n            cid = input(\"Customer ID: \")\n            lic = input(\"License Number: \")\n            car_id = input(\"Car ID: \")\n            days = int(input(\"Rental Duration (days): \"))\n            rent_car(cid, lic, car_id, days)\n\n        elif choice == 5:\n            cid = input(\"Customer ID: \")\n            car_id = input(\"Car ID: \")\n            late = int(input(\"Days Late (0 if on time): \"))\n            dmg = input(\"Any damage to report? (y/n): \").lower() == 'y'\n            desc = \"\"\n            if dmg:\n                desc = input(\"Describe the damage: \")\n            return_car(cid, car_id, late, dmg, desc)\n\n        elif choice == 6:\n            query = input(\"Search Query: \")\n            search_type = input(\"Search By (make/model/category/plate/fuel): \")\n            search_cars(query, search_type)\n\n        elif choice == 7:\n            filter_choice = input(\"Show only available cars? (y/n): \").lower() == 'y'\n            sort_by = input(\"Sort By (make/model/year/rate/popularity/mileage): \")\n            cat_filter = input(\"Filter by category (leave blank for all): \")\n            list_cars(filter_choice, sort_by, cat_filter if cat_filter else None)\n\n        elif choice == 8:\n            cid = input(\"Customer ID: \")\n            get_customer_rentals(cid)\n\n        elif choice == 9:\n            cid = input(\"Customer ID: \")\n            car_id = input(\"Car ID: \")\n            res_date = input(\"Reservation Date (YYYY-MM-DD): \")\n            days = int(input(\"Intended Rental Days: \"))\n            make_reservation(cid, car_id, res_date, days)\n\n        elif choice == 10:\n            cid = input(\"Customer ID: \")\n            amount = float(input(\"Payment Amount ($): \"))\n            pay_outstanding_fees(cid, amount)\n\n        elif choice == 11:\n            car_id = input(\"Car ID: \")\n            condition = input(\"New Condition (excellent/good/fair/poor/damaged/under_maintenance): \")\n            notes = input(\"Notes (optional): \")\n            update_car_condition(car_id, condition, notes)\n\n        elif choice == 12:\n            car_id = input(\"Car ID: \")\n            stype = input(\"Service Type (oil_change/tire_rotation/full_service/etc.): \")\n            cost = float(input(\"Service Cost ($): \"))\n            notes = input(\"Notes (optional): \")\n            service_car(car_id, stype, cost, notes)\n\n        elif choice == 13:\n            generate_report()\n\n        elif choice == 14:\n            car_id = input(\"Car ID: \")\n            get_damage_report(car_id)\n\n        elif choice == 15:\n            car_id = input(\"Car ID: \")\n            new_rate = float(input(\"New Daily Rate ($): \"))\n            admin_update_rate(car_id, new_rate)\n\n        elif choice == 16:\n            cid = input(\"Customer ID: \")\n            reason = input(\"Reason for Blacklisting: \")\n            blacklist_customer(cid, reason)\n\n        elif choice == 17:\n            print(\"Thank you for using the Car Rental Management System. Goodbye!\")\n            break\n\n        else:\n            print(\"Invalid choice. Please select a number between 1 and 17.\")\n\n\nmain()",
+  "code_stats": {
+    "total_imports": 4,
+    "external_libraries": [
+      "datetime",
+      "os",
+      "random",
+      "pickle"
+    ],
+    "total_functions": 26,
+    "function_names": [
+      "remove_car",
+      "authenticate_customer",
+      "generate_report",
+      "pay_outstanding_fees",
+      "get_customer_rentals",
+      "get_damage_report",
+      "update_car_condition",
+      "process_reservations",
+      "calculate_damage_fee",
+      "admin_update_rate",
+      "service_car",
+      "search_cars",
+      "rent_car",
+      "update_mileage",
+      "unblacklist_customer",
+      "return_car",
+      "bulk_add_cars",
+      "main",
+      "make_reservation",
+      "backup_data",
+      "load_config",
+      "calculate_late_fee",
+      "blacklist_customer",
+      "list_cars",
+      "register_customer",
+      "add_car"
+    ],
+    "total_classes": 0,
+    "class_names": [],
+    "total_methods": 0,
+    "method_names": [],
+    "function_call_summary": {
+      "add_car": [
+        "len",
+        "timedelta",
+        "print",
+        "now",
+        "join",
+        "append"
+      ],
+      "remove_car": [
+        "print",
+        "remove"
+      ],
+      "register_customer": [
+        "print",
+        "len",
+        "now",
+        "strptime"
+      ],
+      "authenticate_customer": [
+        "print"
+      ],
+      "rent_car": [
+        "authenticate_customer",
+        "strftime",
+        "len",
+        "get",
+        "timedelta",
+        "print",
+        "now",
+        "append"
+      ],
+      "return_car": [
+        "append",
+        "get",
+        "len",
+        "calculate_damage_fee",
+        "print",
+        "now",
+        "calculate_late_fee"
+      ],
+      "calculate_late_fee": [
+        "print",
+        "round"
+      ],
+      "calculate_damage_fee": [
+        "lower"
+      ],
+      "make_reservation": [
+        "sum",
+        "get",
+        "print",
+        "now",
+        "append"
+      ],
+      "search_cars": [
+        "print",
+        "len",
+        "append",
+        "lower"
+      ],
+      "list_cars": [
+        "print",
+        "len",
+        "sorted"
+      ],
+      "get_customer_rentals": [
+        "print",
+        "len",
+        "get"
+      ],
+      "pay_outstanding_fees": [
+        "print",
+        "now",
+        "append"
+      ],
+      "update_car_condition": [
+        "print",
+        "join"
+      ],
+      "blacklist_customer": [
+        "print"
+      ],
+      "unblacklist_customer": [
+        "print"
+      ],
+      "process_reservations": [
+        "print",
+        "get"
+      ],
+      "service_car": [
+        "print",
+        "now",
+        "strftime"
+      ],
+      "bulk_add_cars": [
+        "add_car",
+        "print",
+        "len"
+      ],
+      "load_config": [
+        "eval",
+        "print",
+        "read",
+        "open"
+      ],
+      "backup_data": [
+        "len",
+        "dump",
+        "open",
+        "print",
+        "now"
+      ],
+      "generate_report": [
+        "now",
+        "sum",
+        "values",
+        "len",
+        "get",
+        "capitalize",
+        "items",
+        "sorted",
+        "print",
+        "strftime"
+      ],
+      "admin_update_rate": [
+        "abs",
+        "print"
+      ],
+      "update_mileage": [
+        "print"
+      ],
+      "get_damage_report": [
+        "print",
+        "len",
+        "enumerate",
+        "strftime"
+      ],
+      "main": [
+        "remove_car",
+        "generate_report",
+        "pay_outstanding_fees",
+        "get_customer_rentals",
+        "get_damage_report",
+        "update_car_condition",
+        "int",
+        "join",
+        "lower",
+        "admin_update_rate"
+      ]
+    },
+    "import_details": [
+      "import random",
+      "import os",
+      "import datetime",
+      "import pickle"
+    ],
+    "special_classes": {},
+    "init_methods": []
+  },
+  "code_structure": {
+    "function_calls": {
+      "add_car": [
+        "len",
+        "timedelta",
+        "print",
+        "now",
+        "join",
+        "append"
+      ],
+      "remove_car": [
+        "print",
+        "remove"
+      ],
+      "register_customer": [
+        "print",
+        "len",
+        "now",
+        "strptime"
+      ],
+      "authenticate_customer": [
+        "print"
+      ],
+      "rent_car": [
+        "authenticate_customer",
+        "strftime",
+        "len",
+        "get",
+        "timedelta",
+        "print",
+        "now",
+        "append"
+      ],
+      "return_car": [
+        "append",
+        "get",
+        "len",
+        "calculate_damage_fee",
+        "print",
+        "now",
+        "calculate_late_fee"
+      ],
+      "calculate_late_fee": [
+        "print",
+        "round"
+      ],
+      "calculate_damage_fee": [
+        "lower"
+      ],
+      "make_reservation": [
+        "sum",
+        "get",
+        "print",
+        "now",
+        "append"
+      ],
+      "search_cars": [
+        "print",
+        "len",
+        "append",
+        "lower"
+      ],
+      "list_cars": [
+        "print",
+        "len",
+        "sorted"
+      ],
+      "get_customer_rentals": [
+        "print",
+        "len",
+        "get"
+      ],
+      "pay_outstanding_fees": [
+        "print",
+        "now",
+        "append"
+      ],
+      "update_car_condition": [
+        "print",
+        "join"
+      ],
+      "blacklist_customer": [
+        "print"
+      ],
+      "unblacklist_customer": [
+        "print"
+      ],
+      "process_reservations": [
+        "print",
+        "get"
+      ],
+      "service_car": [
+        "print",
+        "now",
+        "strftime"
+      ],
+      "bulk_add_cars": [
+        "add_car",
+        "print",
+        "len"
+      ],
+      "load_config": [
+        "eval",
+        "print",
+        "read",
+        "open"
+      ],
+      "backup_data": [
+        "len",
+        "dump",
+        "open",
+        "print",
+        "now"
+      ],
+      "generate_report": [
+        "now",
+        "sum",
+        "values",
+        "len",
+        "get",
+        "capitalize",
+        "items",
+        "sorted",
+        "print",
+        "strftime"
+      ],
+      "admin_update_rate": [
+        "abs",
+        "print"
+      ],
+      "update_mileage": [
+        "print"
+      ],
+      "get_damage_report": [
+        "print",
+        "len",
+        "enumerate",
+        "strftime"
+      ],
+      "main": [
+        "remove_car",
+        "generate_report",
+        "pay_outstanding_fees",
+        "get_customer_rentals",
+        "get_damage_report",
+        "update_car_condition",
+        "int",
+        "join",
+        "lower",
+        "admin_update_rate"
+      ]
+    },
+    "called_by": {
+      "append": [
+        "pay_outstanding_fees",
+        "return_car",
+        "search_cars",
+        "make_reservation",
+        "rent_car",
+        "add_car"
+      ],
+      "print": [
+        "remove_car",
+        "authenticate_customer",
+        "generate_report",
+        "pay_outstanding_fees",
+        "get_customer_rentals",
+        "get_damage_report",
+        "update_car_condition",
+        "process_reservations",
+        "admin_update_rate",
+        "service_car"
+      ],
+      "now": [
+        "generate_report",
+        "pay_outstanding_fees",
+        "backup_data",
+        "return_car",
+        "service_car",
+        "make_reservation",
+        "register_customer",
+        "add_car",
+        "rent_car"
+      ],
+      "len": [
+        "generate_report",
+        "get_damage_report",
+        "get_customer_rentals",
+        "backup_data",
+        "return_car",
+        "search_cars",
+        "bulk_add_cars",
+        "list_cars",
+        "register_customer",
+        "rent_car"
+      ],
+      "timedelta": [
+        "add_car",
+        "rent_car"
+      ],
+      "join": [
+        "add_car",
+        "main",
+        "update_car_condition"
+      ],
+      "remove": [
+        "remove_car"
+      ],
+      "strptime": [
+        "register_customer"
+      ],
+      "authenticate_customer": [
+        "rent_car"
+      ],
+      "get": [
+        "generate_report",
+        "get_customer_rentals",
+        "return_car",
+        "process_reservations",
+        "make_reservation",
+        "rent_car"
+      ],
+      "strftime": [
+        "generate_report",
+        "service_car",
+        "get_damage_report",
+        "rent_car"
+      ],
+      "calculate_damage_fee": [
+        "return_car"
+      ],
+      "calculate_late_fee": [
+        "return_car"
+      ],
+      "round": [
+        "calculate_late_fee"
+      ],
+      "lower": [
+        "calculate_damage_fee",
+        "search_cars",
+        "main"
+      ],
+      "sum": [
+        "generate_report",
+        "make_reservation"
+      ],
+      "sorted": [
+        "generate_report",
+        "list_cars"
+      ],
+      "add_car": [
+        "bulk_add_cars",
+        "main"
+      ],
+      "open": [
+        "load_config",
+        "backup_data"
+      ],
+      "read": [
+        "load_config"
+      ],
+      "eval": [
+        "load_config"
+      ],
+      "dump": [
+        "backup_data"
+      ],
+      "enumerate": [
+        "generate_report",
+        "get_damage_report"
+      ],
+      "values": [
+        "generate_report"
+      ],
+      "items": [
+        "generate_report"
+      ],
+      "capitalize": [
+        "generate_report"
+      ],
+      "abs": [
+        "admin_update_rate"
+      ],
+      "int": [
+        "main"
+      ],
+      "input": [
+        "main"
+      ],
+      "float": [
+        "main"
+      ],
+      "remove_car": [
+        "main"
+      ],
+      "register_customer": [
+        "main"
+      ],
+      "rent_car": [
+        "main"
+      ],
+      "return_car": [
+        "main"
+      ],
+      "search_cars": [
+        "main"
+      ],
+      "list_cars": [
+        "main"
+      ],
+      "get_customer_rentals": [
+        "main"
+      ],
+      "make_reservation": [
+        "main"
+      ],
+      "pay_outstanding_fees": [
+        "main"
+      ],
+      "update_car_condition": [
+        "main"
+      ],
+      "service_car": [
+        "main"
+      ],
+      "generate_report": [
+        "main"
+      ],
+      "get_damage_report": [
+        "main"
+      ],
+      "admin_update_rate": [
+        "main"
+      ],
+      "blacklist_customer": [
+        "main"
+      ]
+    },
+    "imports": [
+      "datetime",
+      "os",
+      "random",
+      "pickle"
+    ],
+    "external_libs": [
+      "datetime",
+      "os",
+      "random",
+      "pickle"
+    ],
+    "all_functions": [
+      "remove_car",
+      "authenticate_customer",
+      "generate_report",
+      "pay_outstanding_fees",
+      "get_customer_rentals",
+      "get_damage_report",
+      "update_car_condition",
+      "process_reservations",
+      "calculate_damage_fee",
+      "admin_update_rate",
+      "service_car",
+      "search_cars",
+      "rent_car",
+      "update_mileage",
+      "unblacklist_customer",
+      "return_car",
+      "bulk_add_cars",
+      "main",
+      "make_reservation",
+      "backup_data",
+      "load_config",
+      "calculate_late_fee",
+      "blacklist_customer",
+      "list_cars",
+      "register_customer",
+      "add_car"
+    ],
+    "all_classes": [],
+    "decorators": {},
+    "type_hints": {
+      "add_car": {},
+      "remove_car": {},
+      "register_customer": {},
+      "authenticate_customer": {},
+      "rent_car": {},
+      "return_car": {},
+      "calculate_late_fee": {},
+      "calculate_damage_fee": {},
+      "make_reservation": {},
+      "search_cars": {},
+      "list_cars": {},
+      "get_customer_rentals": {},
+      "pay_outstanding_fees": {},
+      "update_car_condition": {},
+      "blacklist_customer": {},
+      "unblacklist_customer": {},
+      "process_reservations": {},
+      "service_car": {},
+      "bulk_add_cars": {},
+      "load_config": {},
+      "backup_data": {},
+      "generate_report": {},
+      "admin_update_rate": {},
+      "update_mileage": {},
+      "get_damage_report": {},
+      "main": {}
+    },
+    "special_classes": {},
+    "nested_functions": {},
+    "init_methods": []
+  },
+  "version": "enhanced_v4",
+  "config": {
+    "chunk_size_max": 2500,
+    "function_split_threshold": 2500,
+    "metadata_boost_weights": {
+      "exact_match": 2.8,
+      "name": 2.2,
+      "keywords": 1.5,
+      "chunk_type": 0.8,
+      "function_calls": 1.0,
+      "docstring_match": 1.2,
+      "type_hint_match": 1.1,
+      "decorator_match": 0.9
+    },
+    "hybrid_search_enabled": true,
+    "adaptive_hybrid_ratio": true,
+    "ast_based_chunking": true
+  }
+}
